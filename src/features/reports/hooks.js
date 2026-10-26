@@ -25,6 +25,10 @@ export const useReport = (id) =>
     queryFn: () => api.reports.getDetail(id),
     enabled: Boolean(id),
     refetchOnMount: 'always',
+    // Selama permintaan identitas masih menunggu jawaban santri, muat ulang
+    // berkala agar status persetujuan ikut berubah tanpa refresh manual.
+    refetchInterval: (query) =>
+      query.state.data?.permintaanIdentitas?.status === 'menunggu' ? 10_000 : false,
     retry: retryUnlessClientError,
   })
 
