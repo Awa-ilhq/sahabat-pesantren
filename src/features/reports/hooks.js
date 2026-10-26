@@ -38,6 +38,7 @@ export const useStaffReports = (filters) =>
       status: filters.status,
       kategori: filters.kategori,
       kodeLaporan: filters.kodeLaporan,
+      menyangkutPimpinan: filters.menyangkutPimpinan,
     }),
     queryFn: () => api.reports.getList(filters),
     retry: retryUnlessClientError,

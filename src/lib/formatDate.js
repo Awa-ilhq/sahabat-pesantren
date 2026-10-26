@@ -31,6 +31,21 @@ export const formatDateOnly = (value, fallback = '—') => {
   return date ? DATE_FORMATTER.format(date) : fallback
 }
 
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('id-ID', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
+// Hanya untuk log audit: waktu kejadian memang bagian dari data audit.
+export const formatDateTime = (value, fallback = '—') => {
+  if (!value) return fallback
+  const date = value instanceof Date ? value : new Date(value)
+  return Number.isNaN(date.getTime()) ? fallback : DATE_TIME_FORMATTER.format(date)
+}
+
 export const startOfToday = () => {
   const now = new Date()
   return new Date(now.getFullYear(), now.getMonth(), now.getDate())

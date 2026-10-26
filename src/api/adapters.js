@@ -12,6 +12,7 @@ export const adaptUser = (raw) =>
         phone: raw.telepon_ortu ?? raw.santri?.telepon_ortu ?? raw.phone ?? null,
         username: raw.username ?? null,
         mustChangePassword: Boolean(raw.must_change_password),
+        dashboard: raw.dashboard ?? null,
       }
     : null
 
@@ -68,6 +69,9 @@ export const adaptReport = (raw) =>
         kategori: raw.kategori,
         isi: raw.isi,
         tampilkanIdentitas: Boolean(raw.tampilkan_identitas),
+        menyangkutPimpinan: Boolean(
+          raw.menyangkut_pimpinan ?? raw.menyangkutPimpinan,
+        ),
         status: raw.status,
         penerima: raw.penerima,
         batasKlarifikasi: raw.batas_klarifikasi ?? null,
@@ -185,9 +189,178 @@ export const adaptNotificationList = (raw) => {
   }
 }
 
+const normalizeRisk = (value) => {
+  const risk = String(value ?? 'low').toLowerCase()
+  return ['high', 'tinggi', 'krisis', 'crisis'].includes(risk) ? 'high' : 'low'
+}
+
+const adaptAiHistory = (raw) =>
+  (Array.isArray(raw?.history) ? raw.history : [])
+    .filter((item) => item && typeof item.text === 'string')
+    .map((item) => ({
+      role: item.role === 'user' ? 'user' : 'assistant',
+      body: item.text,
+    }))
+
+export const adaptAiReply = (raw) => {
+  const body = raw ?? {}
+  const history = adaptAiHistory(body)
+  const suggestions = Array.isArray(body.suggestions)
+    ? body.suggestions
+    : Array.isArray(body.saran)
+      ? body.saran
+      : []
+  const lastAssistant = [...history]
+    .reverse()
+    .find((item) => item.role === 'assistant')
+  const reply =
+    body.reply ??
+    body.balasan ??
+    body.isi ??
+    body.message ??
+    lastAssistant?.body ??
+    ''
+  const userTurns = history.filter((item) => item.role === 'user').length
+
+  return {
+    conversationId:
+      body.conversation_id ?? body.conversationId ?? body.id ?? null,
+    reply,
+    history,
+    suggestions: suggestions.filter(
+      (item) => typeof item === 'string' && item.trim(),
+    ),
+    risk: normalizeRisk(body.risk ?? body.risiko),
+    offerReport: Boolean(
+      body.offer_report ??
+        body.tawarkan_laporan ??
+        body.offerReport ??
+        (userTurns >= 3 && reply),
+    ),
+  }
+}
+
+export const adaptAiDraft = (raw) => ({
+  kategori: raw?.kategori ?? 'lainnya',
+  isi: raw?.isi ?? raw?.cerita ?? '',
+  tampilkanIdentitas: false,
+})
+
 export const adaptSummary = (raw) => ({
   totalSantri: raw?.total_santri ?? 0,
   totalLaporan: raw?.total_laporan ?? 0,
-  perStatus: raw?.laporan_per_status ?? {},
-  perKategori: raw?.laporan_per_kategori ?? {},
+  laporanBaru:
+    raw?.laporan_baru ??
+    raw?.laporan_per_status?.baru ??
+    raw?.baru ??
+    0,
+  laporanSensitif:
+    raw?.laporan_sensitif ?? raw?.laporan_menyangkut_pimpinan ?? 0,
+  auditHariIni:
+    raw?.audit_hari_ini ?? raw?.aktivitas_hari_ini ?? raw?.audit_today ?? 0,
+  perStatus: raw?.laporan_per_status ?? raw?.per_status ?? {},
+  perKategori: raw?.laporan_per_kategori ?? raw?.per_kategori ?? {},
 })
+
+export const adaptAuditLog = (raw) =>
+  raw
+    ? {
+        id: raw.id,
+        waktu:
+          raw.waktu ??
+          raw.created_at ??
+          raw.timestamp ??
+          raw.waktu_aktivitas ??
+          null,
+        aktor:
+          raw.aktor ??
+          raw.nama ??
+          raw.user?.name ??
+          raw.user_name ??
+          raw.pengguna?.name ??
+          'Sistem',
+        aktorRole: raw.role ?? raw.user?.role ?? raw.aktor_role ?? null,
+        aksi: raw.aksi ?? raw.action ?? raw.jenis ?? null,
+        target:
+          raw.target ??
+          raw.no_laporan ??
+          raw.laporan?.no_laporan ??
+          (raw.laporan_id ? `Laporan #${raw.laporan_id}` : null),
+        laporanId: raw.laporan_id ?? raw.report_id ?? raw.laporan?.id ?? null,
+        detail:
+          raw.detail ??
+          raw.keterangan ??
+          raw.description ??
+          raw.catatan ??
+          null,
+        ip: raw.ip ?? raw.ip_address ?? null,
+      }
+    : null
+
+export const adaptAuditList = (raw) => {
+  const body = raw ?? {}
+  const payload = body.data ?? body
+  const items = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload.items)
+      ? payload.items
+      : Array.isArray(payload.data)
+        ? payload.data
+        : []
+  const meta = payload.meta ?? body.meta ?? body.pagination ?? payload.pagination
+  return {
+    items: items.map(adaptAuditLog).filter(Boolean),
+    meta: adaptPagination(meta, items.length),
+  }
+}
+
+export const adaptDeactivationRequest = (raw) =>
+  raw
+    ? {
+        id: raw.id,
+        status: raw.status ?? 'menunggu',
+        accountId:
+          raw.account_id ?? raw.user_id ?? raw.target_id ?? raw.user?.id ?? null,
+        accountName:
+          raw.account_name ??
+          raw.nama_akun ??
+          raw.target?.name ??
+          raw.user?.name ??
+          null,
+        accountRole:
+          raw.account_role ?? raw.target?.role ?? raw.user?.role ?? 'pimpinan',
+        requestedBy:
+          raw.requested_by ??
+          raw.diminta_oleh ??
+          raw.requester?.name ??
+          raw.peminta?.name ??
+          null,
+        reason: raw.alasan ?? raw.reason ?? raw.catatan ?? null,
+        createdAt:
+          raw.created_at ?? raw.dibuat ?? raw.waktu ?? raw.requested_at ?? null,
+        decidedBy:
+          raw.decided_by ??
+          raw.disetujui_oleh ??
+          raw.approver?.name ??
+          null,
+        decidedAt:
+          raw.decided_at ?? raw.dijawab ?? raw.approved_at ?? null,
+      }
+    : null
+
+export const adaptDeactivationList = (raw) => {
+  const body = raw ?? {}
+  const payload = body.data ?? body
+  const items = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload.items)
+      ? payload.items
+      : Array.isArray(payload.data)
+        ? payload.data
+        : []
+  const meta = payload.meta ?? body.meta ?? body.pagination ?? payload.pagination
+  return {
+    items: items.map(adaptDeactivationRequest).filter(Boolean),
+    meta: adaptPagination(meta, items.length),
+  }
+}

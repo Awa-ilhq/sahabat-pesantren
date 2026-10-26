@@ -9,7 +9,7 @@ export function RedirectIfAuthenticated({ children }) {
     if (user.mustChangePassword) {
       return <Navigate to="/ganti-password" replace />
     }
-    return <Navigate to={homeForRole(user.role)} replace />
+    return <Navigate to={homeForRole(user.role, user.dashboard)} replace />
   }
 
   return children

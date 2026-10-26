@@ -45,15 +45,19 @@ const unwrapList = (response) => {
 const currentUser = () => getSession()?.user ?? null
 
 const canViewReport = (report, role, userId) => {
-  if (role === ROLES.PENGURUS && report.kategori === 'masalah_pengurus') {
-    return false
-  }
   if (
     role === ROLES.SANTRI &&
     report.ownerId != null &&
     userId != null &&
     String(report.ownerId) !== String(userId)
   ) {
+    return false
+  }
+  // Laporan yang menyangkut pimpinan hanya untuk pengawas dan pelapornya.
+  if (report.menyangkutPimpinan) {
+    return role === ROLES.PENGAWAS || role === ROLES.SANTRI
+  }
+  if (role === ROLES.PENGURUS && report.kategori === 'masalah_pengurus') {
     return false
   }
   return true
@@ -107,7 +111,12 @@ export const getMine = async () => {
   }
 }
 
-export const getList = async ({ status, kategori, kodeLaporan } = {}) => {
+export const getList = async ({
+  status,
+  kategori,
+  kodeLaporan,
+  menyangkutPimpinan,
+} = {}) => {
   const firstPage = unwrapList(
     await http.get('/reports', { params: { page: 1 } }),
   )
@@ -128,6 +137,7 @@ export const getList = async ({ status, kategori, kodeLaporan } = {}) => {
       (report) =>
         (!status || report.status === status) &&
         (!kategori || report.kategori === kategori) &&
+        (!menyangkutPimpinan || report.menyangkutPimpinan) &&
         (!code || String(report.noLaporan ?? '').toLowerCase().includes(code)),
     )
   return {

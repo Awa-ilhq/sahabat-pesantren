@@ -5,12 +5,14 @@ export const ROLES = {
   SANTRI: 'santri',
   PENGURUS: 'pengurus',
   PIMPINAN: 'pimpinan',
+  PENGAWAS: 'pengawas',
 }
 
 export const ROLE_LABELS = {
   [ROLES.SANTRI]: 'Santri',
   [ROLES.PENGURUS]: 'Pengurus',
   [ROLES.PIMPINAN]: 'Pimpinan',
+  [ROLES.PENGAWAS]: 'Pengawas',
 }
 
 export const CATEGORIES = [
@@ -75,11 +77,53 @@ export const ESCALATION_TARGET_LABELS = Object.fromEntries(
 export const REPORT_RECIPIENTS = {
   pengurus: 'Pengurus',
   pimpinan: 'Pimpinan',
+  pengawas: 'Pengawas',
 }
 
 // Laporan tentang pengurus diteruskan langsung ke pimpinan.
 export const routesToPimpinan = ({ kategori }) =>
   kategori === 'masalah_pengurus'
+
+// Laporan yang menyangkut pimpinan hanya boleh dibaca oleh pengawas.
+export const isSensitiveReport = (report) =>
+  Boolean(report?.menyangkutPimpinan)
+
+export const reportsBasePath = (role) =>
+  role === ROLES.PENGAWAS ? '/dashboard/pengawas/laporan' : '/petugas'
+
+export const reportDetailPath = (role, id) => {
+  if (role === ROLES.SANTRI) return `/santri/laporan/${id}`
+  if (role === ROLES.PENGAWAS) return `${reportsBasePath(role)}/${id}`
+  return `/petugas/laporan/${id}`
+}
+
+export const AUDIT_ACTION_OPTIONS = [
+  { value: '', label: 'Semua aksi' },
+  { value: 'login', label: 'Masuk' },
+  { value: 'logout', label: 'Keluar' },
+  { value: 'lihat_laporan', label: 'Melihat laporan' },
+  { value: 'lihat_identitas', label: 'Melihat identitas' },
+  { value: 'ubah_status', label: 'Mengubah status' },
+  { value: 'eskalasi', label: 'Meneruskan laporan' },
+  { value: 'buat_laporan', label: 'Membuat laporan' },
+  { value: 'kirim_pesan', label: 'Mengirim pesan' },
+  { value: 'nonaktifkan_akun', label: 'Menonaktifkan akun' },
+  { value: 'setujui_penonaktifan', label: 'Menyetujui penonaktifan' },
+  { value: 'tolak_penonaktifan', label: 'Menolak penonaktifan' },
+]
+
+export const AUDIT_ACTION_LABELS = Object.fromEntries(
+  AUDIT_ACTION_OPTIONS.filter((item) => item.value).map((item) => [
+    item.value,
+    item.label,
+  ]),
+)
+
+export const DEACTIVATION_STATUS = {
+  menunggu: { label: 'Menunggu persetujuan', tone: 'new' },
+  disetujui: { label: 'Disetujui', tone: 'done' },
+  ditolak: { label: 'Ditolak', tone: 'danger' },
+}
 
 // Permintaan pimpinan untuk melihat nama pelapor (harus disetujui santri).
 export const IDENTITY_REQUEST_STATUS = {
@@ -100,6 +144,10 @@ export const HOME_BY_ROLE = {
   [ROLES.SANTRI]: '/santri/buat-laporan',
   [ROLES.PENGURUS]: '/petugas/dashboard',
   [ROLES.PIMPINAN]: '/pimpinan/dashboard',
+  [ROLES.PENGAWAS]: '/dashboard/pengawas',
 }
 
-export const homeForRole = (role) => HOME_BY_ROLE[role] ?? '/'
+// Backend mengirimkan `dashboard` pada respons login; fallback ke peta peran
+// bila field itu tidak tersedia.
+export const homeForRole = (role, dashboard = null) =>
+  dashboard || HOME_BY_ROLE[role] || '/'

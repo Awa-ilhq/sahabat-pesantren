@@ -20,7 +20,12 @@ import {
   StatusBadge,
 } from '../../features/reports/components/badges'
 import { useStaffReports } from '../../features/reports/hooks'
-import { CATEGORIES, PAGE_SIZE, STATUSES } from '../../lib/constants'
+import {
+  CATEGORIES,
+  PAGE_SIZE,
+  STATUSES,
+  reportDetailPath,
+} from '../../lib/constants'
 import { displayReporter } from '../../lib/displayReporter'
 import {
   dueState,
@@ -272,7 +277,7 @@ export default function StaffReportListPage() {
               return (
                 <li key={report.id}>
                   <Link
-                    to={`/petugas/laporan/${report.id}`}
+                    to={reportDetailPath(user?.role, report.id)}
                     className={cn(
                       'grid gap-4 rounded-3xl p-4 shadow-[0_8px_24px_rgba(18,55,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(18,55,42,0.1)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5',
                       overdue ? 'bg-[#fff2eb]' : 'bg-white',

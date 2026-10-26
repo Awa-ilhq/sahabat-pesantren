@@ -230,6 +230,12 @@ export function Conversation({ id, viewer }) {
               'w-full rounded-2xl border bg-white px-4 py-3 text-navy placeholder:text-body/60 focus:border-primary focus:outline-none focus:ring-3 focus:ring-primary/30',
               errors.body ? 'border-danger' : 'border-border',
             )}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault()
+                event.currentTarget.form?.requestSubmit()
+              }
+            }}
             {...register('body')}
           />
           {errors.body ? (

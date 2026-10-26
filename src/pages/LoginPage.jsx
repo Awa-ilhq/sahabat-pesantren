@@ -21,6 +21,8 @@ const DEMO_ACCOUNTS = [
   { label: 'Santri 2', identifier: 'santri2', password: 'santri123' },
   { label: 'Pengurus', identifier: 'pengurus1', password: 'pengurus123' },
   { label: 'Pimpinan', identifier: 'pimpinan1', password: 'pimpinan123' },
+  { label: 'Pimpinan 2', identifier: 'pimpinan2', password: 'pimpinan123' },
+  { label: 'Pengawas', identifier: 'pengawas1', password: 'pengawas123' },
 ]
 
 const DISPLAY = {    
@@ -71,7 +73,9 @@ export default function LoginPage() {
       if (loggedIn.mustChangePassword) {
         navigate('/ganti-password', { replace: true })
       } else {
-        navigate(homeForRole(loggedIn.role), { replace: true })
+        navigate(homeForRole(loggedIn.role, loggedIn.dashboard), {
+          replace: true,
+        })
       }
     } catch (error) {
       setWelcome(false)

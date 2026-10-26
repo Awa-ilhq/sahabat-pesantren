@@ -2,6 +2,7 @@ import {
   CheckCircle2,
   CircleDot,
   Hourglass,
+  ShieldAlert,
 } from 'lucide-react'
 import Badge from '../../../components/ui/Badge'
 import {
@@ -38,6 +39,14 @@ export function CategoryBadge({ kategori }) {
   return (
     <Badge tone={tones[kategori] ?? 'neutral'}>
       {CATEGORY_LABELS[kategori] ?? kategori}
+    </Badge>
+  )
+}
+
+export function SensitiveBadge() {
+  return (
+    <Badge tone="danger" icon={ShieldAlert}>
+      Menyangkut pimpinan
     </Badge>
   )
 }

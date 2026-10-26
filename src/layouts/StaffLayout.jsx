@@ -1,4 +1,12 @@
-import { Bell, FileText, LayoutDashboard, Users } from 'lucide-react'
+import {
+  Bell,
+  FileText,
+  History,
+  LayoutDashboard,
+  ShieldAlert,
+  ShieldCheck,
+  Users,
+} from 'lucide-react'
 import { useCallback } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import DemoBanner from '../components/DemoBanner'
@@ -33,6 +41,37 @@ const NAV_ITEMS = [
     roles: ['pengurus'],
   },
   {
+    to: '/dashboard/pengawas',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    end: true,
+    roles: ['pengawas'],
+  },
+  {
+    to: '/dashboard/pengawas/laporan',
+    label: 'Laporan',
+    icon: ShieldAlert,
+    roles: ['pengawas'],
+  },
+  {
+    to: '/dashboard/pengawas/audit',
+    label: 'Audit',
+    icon: History,
+    roles: ['pengawas'],
+  },
+  {
+    to: '/pimpinan/audit',
+    label: 'Audit',
+    icon: History,
+    roles: ['pimpinan'],
+  },
+  {
+    to: '/pimpinan/pengajuan',
+    label: 'Persetujuan',
+    icon: ShieldCheck,
+    roles: ['pimpinan'],
+  },
+  {
     to: '/pimpinan/notifikasi',
     label: 'Notifikasi',
     icon: Bell,
@@ -43,6 +82,12 @@ const NAV_ITEMS = [
     label: 'Notifikasi',
     icon: Bell,
     roles: ['pengurus'],
+  },
+  {
+    to: '/dashboard/pengawas/notifikasi',
+    label: 'Notifikasi',
+    icon: Bell,
+    roles: ['pengawas'],
   },
   { to: '/pimpinan/akun', label: 'Akun', icon: Users, roles: ['pimpinan'] },
 ]

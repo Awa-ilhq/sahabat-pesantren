@@ -1,10 +1,19 @@
 export class ApiError extends Error {
-  constructor({ status = 0, message = 'Terjadi kesalahan', errors = null, isNetwork = false }) {
+  constructor({
+    status = 0,
+    message = 'Terjadi kesalahan',
+    errors = null,
+    isNetwork = false,
+    requiresApproval = false,
+    requestId = null,
+  }) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.errors = errors
     this.isNetwork = isNetwork
+    this.requiresApproval = requiresApproval
+    this.requestId = requestId
   }
 }
 
@@ -35,5 +44,13 @@ export const toApiError = (error) => {
   const message =
     data.message || firstMessage(errors) || 'Terjadi kesalahan. Coba lagi.'
 
-  return new ApiError({ status: response.status, message, errors })
+  return new ApiError({
+    status: response.status,
+    message,
+    errors,
+    requiresApproval: Boolean(
+      data.requires_approval ?? data.requiresApproval,
+    ),
+    requestId: data.request_id ?? data.requestId ?? data.id ?? null,
+  })
 }

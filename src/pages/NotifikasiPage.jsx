@@ -23,6 +23,7 @@ import {
   ROLES,
   ROLE_LABELS,
   STATUS_LABELS,
+  reportDetailPath,
 } from '../lib/constants'
 import { formatDateOnly } from '../lib/formatDate'
 
@@ -85,11 +86,9 @@ export default function NotifikasiPage() {
   const { data, isLoading, isError, isFetching, refetch } = useNotifications()
 
   const role = user?.role
-  const isSantri = role === ROLES.SANTRI
   const items = data?.items ?? EMPTY_ITEMS
   const total = Number(data?.meta?.total ?? items.length)
-  const detailPath = (id) =>
-    isSantri ? `/santri/laporan/${id}` : `/petugas/laporan/${id}`
+  const detailPath = (id) => reportDetailPath(role, id)
 
   return (
     <div className="flex flex-col gap-5">

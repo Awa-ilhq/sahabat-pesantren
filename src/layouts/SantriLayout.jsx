@@ -1,4 +1,4 @@
-import { Bell, FilePlus2, FileText } from 'lucide-react'
+import { Bell, FilePlus2, FileText, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useRef } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import DemoBanner from '../components/DemoBanner'
@@ -13,6 +13,7 @@ import { IDLE_TIMEOUT_SECONDS } from '../lib/env'
 
 const NAV_ITEMS = [
   { to: '/santri/buat-laporan', label: 'Buat Laporan', icon: FilePlus2 },
+  { to: '/santri/teman-cerita', label: 'Teman Cerita', icon: Sparkles },
   { to: '/santri/laporan-saya', label: 'Laporan Saya', icon: FileText },
 ]
 

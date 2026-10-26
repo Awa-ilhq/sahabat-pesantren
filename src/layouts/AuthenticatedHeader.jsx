@@ -8,7 +8,9 @@ function AuthenticatedHeader({ homePath, user, roleLabel, exitLabel, onExit }) {
       ? '/santri/profil'
       : user?.role === 'pimpinan'
         ? '/pimpinan/profil'
-        : '/petugas/profil'
+        : user?.role === 'pengawas'
+          ? '/dashboard/pengawas/profil'
+          : '/petugas/profil'
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#d3e2d8] bg-[#edf6f0]/95 backdrop-blur lg:hidden">

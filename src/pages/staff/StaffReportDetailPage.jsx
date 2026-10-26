@@ -23,6 +23,7 @@ import IdentityRequestStaff from '../../features/identity/IdentityRequestStaff'
 import { notificationKeys } from '../../features/notifications/queryKeys'
 import {
   CategoryBadge,
+  SensitiveBadge,
   StatusBadge,
 } from '../../features/reports/components/badges'
 import {
@@ -34,7 +35,9 @@ import {
 import {
   ESCALATION_TARGETS,
   ESCALATION_TARGET_LABELS,
+  ROLES,
   STATUSES,
+  reportsBasePath,
 } from '../../lib/constants'
 import { displayReporter } from '../../lib/displayReporter'
 import { formatDateOnly } from '../../lib/formatDate'
@@ -99,7 +102,7 @@ export default function StaffReportDetailPage() {
           description="Laporan mungkin sudah dihapus atau nomornya salah."
           action={
             <Link
-              to="/petugas"
+              to={reportsBasePath(user?.role)}
               className="font-semibold text-primary-hover hover:underline"
             >
               Kembali ke daftar laporan
@@ -166,7 +169,7 @@ export default function StaffReportDetailPage() {
   return (
     <div className="flex flex-col gap-5">
       <Link
-        to="/petugas"
+        to={reportsBasePath(user?.role)}
         className="inline-flex items-center gap-2 text-sm font-semibold text-primary-hover hover:underline"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
@@ -182,6 +185,7 @@ export default function StaffReportDetailPage() {
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <CategoryBadge kategori={report.kategori} />
+          {report.menyangkutPimpinan ? <SensitiveBadge /> : null}
         </div>
 
         <dl className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -220,8 +224,9 @@ export default function StaffReportDetailPage() {
         ) : null}
       </Card>
 
-      <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
-        <h2 className="text-xl">Tindakan</h2>
+      {user?.role !== ROLES.PENGAWAS ? (
+        <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
+          <h2 className="text-xl">Tindakan</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Select
             id="ubah-status"
@@ -242,14 +247,18 @@ export default function StaffReportDetailPage() {
             </Button>
           </div>
         </div>
-      </Card>
+        </Card>
+      ) : null}
 
       {user?.role === 'pimpinan' ? (
         <IdentityRequestStaff report={report} />
       ) : null}
 
-      <Conversation id={id} viewer="petugas" />
+      {user?.role !== ROLES.PENGAWAS ? (
+        <Conversation id={id} viewer="petugas" />
+      ) : null}
 
+      {user?.role !== ROLES.PENGAWAS ? (
       <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
         <h2 className="flex items-center gap-2 text-xl">
           <StickyNote aria-hidden="true" className="size-5 text-primary" />
@@ -307,6 +316,7 @@ export default function StaffReportDetailPage() {
           </div>
         </form>
       </Card>
+      ) : null}
 
       <Modal
         open={escalateOpen}

@@ -19,7 +19,9 @@ function AuthenticatedNavigation({
       ? '/santri/profil'
       : user?.role === 'pimpinan'
         ? '/pimpinan/profil'
-        : '/petugas/profil'
+        : user?.role === 'pengawas'
+          ? '/dashboard/pengawas/profil'
+          : '/petugas/profil'
 
   const linkClass = ({ isActive }) =>
     cn(

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useDeferredValue, useRef, useState } from 'react'
 import Button from '../../components/ui/Button'
+import ButtonLink from '../../components/ui/ButtonLink'
 import Card from '../../components/ui/Card'
 import ErrorState from '../../components/ui/ErrorState'
 import Input from '../../components/ui/Input'
@@ -65,6 +66,7 @@ function AccountsTab({ role }) {
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [errors, setErrors] = useState({})
+  const [pendingApproval, setPendingApproval] = useState(null)
 
   const submit = async (event) => {
     event.preventDefault()
@@ -100,8 +102,19 @@ function AccountsTab({ role }) {
             account.active ? 'Akun dinonaktifkan.' : 'Akun diaktifkan.',
             'success',
           ),
-        onError: (error) =>
-          toast.showToast(error?.message ?? 'Gagal mengubah status akun.', 'error'),
+        onError: (error) => {
+          if (error?.requiresApproval) {
+            setPendingApproval({
+              name: account.name,
+              message: error.message,
+            })
+            return
+          }
+          toast.showToast(
+            error?.message ?? 'Gagal mengubah status akun.',
+            'error',
+          )
+        },
       },
     )
   }
@@ -291,6 +304,31 @@ function AccountsTab({ role }) {
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(pendingApproval)}
+        onClose={() => setPendingApproval(null)}
+        title="Perlu persetujuan pimpinan lain"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setPendingApproval(null)}>
+              Tutup
+            </Button>
+            <ButtonLink to="/pimpinan/pengajuan" onClick={() => setPendingApproval(null)}>
+              Lihat pengajuan
+            </ButtonLink>
+          </>
+        }
+      >
+        <p className="text-sm text-navy">
+          {pendingApproval?.message ??
+            'Penonaktifan akun ini memerlukan persetujuan pimpinan lain.'}
+        </p>
+        <p className="text-sm text-body">
+          Pengajuan untuk {pendingApproval?.name ?? 'akun ini'} sudah dibuat dan
+          akan diproses melalui halaman Persetujuan.
+        </p>
       </Modal>
     </div>
   )
@@ -525,6 +563,7 @@ export default function AccountsPage() {
 
   const tabs = [
     { value: 'pengurus', label: 'Akun Pengurus' },
+    { value: 'pimpinan', label: 'Akun Pimpinan' },
     { value: 'santri', label: 'Akun Santri' },
     { value: 'import', label: 'Impor / Update Santri' },
   ]
@@ -564,6 +603,8 @@ export default function AccountsPage() {
 
       {tab === 'pengurus' ? (
         <AccountsTab role={ROLES.PENGURUS} />
+      ) : tab === 'pimpinan' ? (
+        <AccountsTab role={ROLES.PIMPINAN} />
       ) : tab === 'santri' ? (
         <AccountsTab role={ROLES.SANTRI} />
       ) : (

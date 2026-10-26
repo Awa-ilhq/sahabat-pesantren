@@ -18,7 +18,12 @@ import {
   createSantriTemplateWorkbookBlob,
   readSantriWorkbook,
 } from '../../lib/santriWorkbook'
-import { clearSession, emitSessionExpired, getToken } from '../../lib/session'
+import {
+  clearSession,
+  emitSessionExpired,
+  getSession,
+  getToken,
+} from '../../lib/session'
 import {
   accounts,
   nextMessageId,
@@ -50,6 +55,14 @@ const requireUser = () => {
   return account
 }
 
+// Mock AI dipakai juga saat aplikasi tersambung ke API asli, sehingga
+// identitas diambil dari sesi yang tersimpan, bukan dari token mock.
+const requireSessionUser = () => {
+  const user = getSession()?.user
+  if (!user) expired()
+  return user
+}
+
 const requireRole = (user, roles) => {
   if (!roles.includes(user.role)) {
     fail(403, 'Kamu tidak punya akses ke halaman ini.')
@@ -61,6 +74,10 @@ const findReport = (id) =>
 
 const canView = (user, report) => {
   if (user.role === 'santri') return report.ownerId === user.id
+  if (report.menyangkutPimpinan || report.penerima === 'pengawas') {
+    return user.role === 'pengawas'
+  }
+  if (user.role === 'pengawas') return false
   if (user.role === 'pengurus') return report.penerima === 'pengurus'
   return true
 }
@@ -104,6 +121,98 @@ const hasNewMessages = (report, user, snapshot) => {
 
 const PROOF_TYPES = ['image/jpeg', 'image/png', 'application/pdf']
 
+// Percakapan Teman Cerita disimpan di memori seperti data mock lain dan tidak
+// pernah menyentuh localStorage.
+const aiConversations = new Map()
+let aiConversationSequence = 0
+let aiMessageSequence = 0
+
+const nextAiConversationId = () => {
+  aiConversationSequence += 1
+  return `ai-${aiConversationSequence}`
+}
+
+const nextAiMessageId = () => {
+  aiMessageSequence += 1
+  return `ai-msg-${aiMessageSequence}`
+}
+
+const AI_RISK_PATTERN =
+  /(bunuh diri|ingin mati|pengen mati|mau mati|mengakhiri hidup|menyakiti diri|melukai diri|silet|overdosis|dipukul|ditendang|diancam|dilecehkan|diperkosa|pemerkosaan)/i
+const AI_BULLY_PATTERN =
+  /(ejek|diejek|hina|dihina|kucil|dikucilkan|bully|perundungan|diganggu|mengganggu|ditertawakan)/i
+const AI_SAD_PATTERN =
+  /(sedih|cemas|takut|kesepian|sendiri|rindu|sulit tidur|stres|stress|beban|lelah|capek)/i
+const AI_REPORT_PATTERN = /(lapor|laporkan|draft|draf)/i
+
+const AI_REPLY_PACKS = {
+  crisis: {
+    bodies: [
+      'Terima kasih sudah berani cerita. Keadaan ini terdengar berat, dan keselamatanmu yang paling penting. Tolong segera hubungi pengurus, ustaz, atau orang dewasa yang kamu percaya; kalau kamu dalam bahaya sekarang, hubungi SAPA 129 atau layanan darurat.',
+    ],
+    suggestions: ['Aku mau bicara ke pengurus', 'Aku mau buat laporan'],
+  },
+  bullying: {
+    bodies: [
+      'Terima kasih sudah cerita. Diperlakukan seperti itu pasti menyakitkan, dan kamu tidak pantas mengalaminya. Sejak kapan ini terjadi?',
+      'Aku mendengarmu. Itu bukan salahmu, dan kamu berhak merasa aman. Apakah ada orang dewasa di pesantren yang sudah kamu percaya untuk bicara?',
+      'Terima kasih sudah terus bercerita. Kamu tidak sendirian. Kalau mau, kita bisa pelan-pelan merapikan ceritamu jadi laporan.',
+    ],
+    suggestions: ['Beberapa hari', 'Sudah lama', 'Lewati'],
+  },
+  sad: {
+    bodies: [
+      'Aku di sini menemani. Perasaan itu berat, ya. Mau cerita apa yang paling mengganggu pikiranmu belakangan ini?',
+      'Terima kasih sudah jujur. Tidak apa-apa kalau belum tahu harus bagaimana. Apakah kamu punya orang dewasa yang bisa diajak bicara?',
+      'Aku mendengarmu. Kamu tidak harus menghadapi semuanya sendirian. Kalau mau, aku bisa bantu merapikan ceritamu jadi draf laporan.',
+    ],
+    suggestions: ['Belakangan ini', 'Sudah lama', 'Lewati'],
+  },
+  generic: {
+    bodies: [
+      'Hai, aku di sini. Cerita saja pelan-pelan, tidak perlu rapi. Apa yang sedang kamu rasakan?',
+      'Terima kasih sudah cerita. Aku mendengarkan. Boleh lanjutkan bagian yang paling ingin kamu sampaikan?',
+      'Aku mengerti. Kamu sudah berani bercerita, itu langkah yang baik. Mau cerita lebih lanjut?',
+    ],
+    suggestions: ['Aku masih ingin cerita', 'Bantu aku membuat laporan'],
+  },
+}
+
+const aiReplyPackFor = (text) => {
+  if (AI_RISK_PATTERN.test(text)) return 'crisis'
+  if (AI_BULLY_PATTERN.test(text)) return 'bullying'
+  if (AI_SAD_PATTERN.test(text)) return 'sad'
+  return 'generic'
+}
+
+const aiReplyFor = (text, turn) => {
+  const key = aiReplyPackFor(text)
+  const pack = AI_REPLY_PACKS[key]
+  return {
+    body: pack.bodies[(Math.max(turn, 1) - 1) % pack.bodies.length],
+    suggestions: pack.suggestions,
+    risk: key === 'crisis' ? 'high' : 'low',
+  }
+}
+
+const aiCategoryFor = (text) => {
+  const value = text.toLowerCase()
+  if (/(pengurus|ustaz|ustadz|pembina|pengasuh)/.test(value)) return 'masalah_pengurus'
+  if (/(pukul|tendang|dorong|sentuh|fisik|memukul|menendang)/.test(value)) {
+    return 'kekerasan_fisik'
+  }
+  if (/(ejek|hina|kucil|bully|perundungan|ganggu|tertawa)/.test(value)) {
+    return 'perundungan'
+  }
+  if (/(bentak|ancam|makian|maki|teriak|kata kasar)/.test(value)) {
+    return 'kekerasan_verbal'
+  }
+  if (/(sedih|cemas|takut|kesepian|rindu|tidur|stres|stress|beban)/.test(value)) {
+    return 'masalah_pribadi'
+  }
+  return 'lainnya'
+}
+
 const toRawRequest = (request, viewer) => {
   // Pengurus tidak perlu tahu soal permintaan ini; hanya pelapor dan pimpinan.
   if (!request || viewer.role === 'pengurus') return null
@@ -135,6 +244,7 @@ const toRawReport = (report, viewer) => {
     kategori: report.kategori,
     isi: report.isi,
     tampilkan_identitas: report.tampilkanIdentitas,
+    menyangkut_pimpinan: Boolean(report.menyangkutPimpinan),
     status: report.status,
     penerima: report.penerima,
     batas_klarifikasi: report.batasKlarifikasi,
@@ -251,9 +361,14 @@ export const reports = {
     }
 
     const { id, noLaporan } = nextReportId()
-    const penerima = routesToPimpinan({ kategori: payload.kategori })
-      ? 'pimpinan'
-      : 'pengurus'
+    const menyangkutPimpinan = Boolean(
+      payload.menyangkut_pimpinan ?? payload.menyangkutPimpinan,
+    )
+    const penerima = menyangkutPimpinan
+      ? 'pengawas'
+      : routesToPimpinan({ kategori: payload.kategori })
+        ? 'pimpinan'
+        : 'pengurus'
 
     const report = {
       id,
@@ -262,6 +377,7 @@ export const reports = {
       kategori: payload.kategori,
       isi,
       tampilkanIdentitas: Boolean(payload.tampilkan_identitas),
+      menyangkutPimpinan,
       status: 'baru',
       penerima,
       batasKlarifikasi: offsetDate(1),
@@ -293,12 +409,15 @@ export const reports = {
     }
   },
 
-  async getList({ status, kategori, kodeLaporan } = {}) {
+  async getList({ status, kategori, kodeLaporan, menyangkutPimpinan } = {}) {
     await delay()
     const user = requireUser()
-    requireRole(user, ['pengurus', 'pimpinan'])
+    requireRole(user, ['pengurus', 'pimpinan', 'pengawas'])
     let visible = reportStore.filter((item) => canView(user, item))
     if (status) visible = visible.filter((item) => item.status === status)
+    if (menyangkutPimpinan) {
+      visible = visible.filter((item) => item.menyangkutPimpinan)
+    }
     if (kategori) visible = visible.filter((item) => item.kategori === kategori)
     if (kodeLaporan?.trim()) {
       const query = kodeLaporan.trim().toLowerCase()
@@ -468,6 +587,106 @@ export const messages = {
     report.messages.push(item)
     markReportRead(user, report)
     return adaptMessage(toRawMessage(item))
+  },
+}
+
+export const ai = {
+  async chat({ conversationId, message }) {
+    await delay(700)
+    const user = requireSessionUser()
+    requireRole(user, ['santri'])
+
+    const text = String(message ?? '').trim()
+    if (!text) {
+      fail(422, 'Tulis pesan dulu, ya.', { message: ['Tulis pesan dulu, ya.'] })
+    }
+    if (text.length > 1000) {
+      fail(422, 'Pesan terlalu panjang, maksimal 1000 karakter.', {
+        message: ['Pesan terlalu panjang, maksimal 1000 karakter.'],
+      })
+    }
+
+    let conversation = conversationId
+      ? aiConversations.get(String(conversationId))
+      : null
+    if (conversation && conversation.ownerId !== user.id) {
+      fail(403, 'Percakapan ini bukan milikmu.')
+    }
+    if (!conversation) {
+      conversation = {
+        id: nextAiConversationId(),
+        ownerId: user.id,
+        turn: 0,
+        messages: [],
+        createdAt: new Date().toISOString(),
+      }
+      aiConversations.set(conversation.id, conversation)
+    }
+
+    conversation.turn += 1
+    conversation.messages.push({
+      id: nextAiMessageId(),
+      role: 'user',
+      body: text,
+      createdAt: new Date().toISOString(),
+    })
+
+    const { body, suggestions, risk } = aiReplyFor(text, conversation.turn)
+    const offerReport =
+      risk === 'high' ||
+      conversation.turn >= 3 ||
+      AI_REPORT_PATTERN.test(text)
+
+    conversation.messages.push({
+      id: nextAiMessageId(),
+      role: 'assistant',
+      body,
+      createdAt: new Date().toISOString(),
+    })
+
+    return {
+      conversationId: conversation.id,
+      reply: body,
+      suggestions:
+        offerReport && risk !== 'high'
+          ? ['Bantu aku membuat laporan', 'Aku mau cerita lagi']
+          : suggestions,
+      risk,
+      offerReport,
+    }
+  },
+
+  async createDraft(payload) {
+    await delay(400)
+    const user = requireSessionUser()
+    requireRole(user, ['santri'])
+
+    const { conversationId, messages } =
+      typeof payload === 'string' ? { conversationId: payload } : payload ?? {}
+
+    const conversation = conversationId
+      ? aiConversations.get(String(conversationId))
+      : null
+    if (conversation && conversation.ownerId !== user.id) {
+      fail(403, 'Percakapan ini bukan milikmu.')
+    }
+
+    const stories = conversation
+      ? conversation.messages
+          .filter((item) => item.role === 'user')
+          .map((item) => item.body)
+      : (Array.isArray(messages) ? messages : [])
+          .filter((item) => item.role === 'user' && item.body?.trim())
+          .map((item) => item.body.trim())
+    if (!stories.length) {
+      fail(422, 'Belum ada cerita yang bisa dijadikan draf.')
+    }
+
+    return {
+      kategori: aiCategoryFor(stories.join(' ')),
+      isi: `Aku ingin melaporkan hal ini.\n\n${stories.join('\n\n')}`,
+      tampilkanIdentitas: false,
+    }
   },
 }
 
@@ -657,10 +876,14 @@ export const dashboard = {
   async getSummary() {
     await delay()
     const user = requireUser()
-    requireRole(user, ['pimpinan'])
+    requireRole(user, ['pimpinan', 'pengawas'])
     return adaptSummary({
       total_santri: accounts.filter((account) => account.role === 'santri').length,
       total_laporan: reportStore.length,
+      laporan_baru: reportStore.filter((item) => item.status === 'baru').length,
+      laporan_sensitif: reportStore.filter((item) => item.menyangkutPimpinan)
+        .length,
+      audit_hari_ini: 3,
       laporan_per_status: countBy(reportStore, 'status'),
       laporan_per_kategori: countBy(reportStore, 'kategori'),
     })
@@ -948,6 +1171,31 @@ export const admin = {
     requireRole(user, ['pimpinan'])
     const account = accounts.find((item) => item.id === id)
     if (!account) fail(404, 'Akun tidak ditemukan.')
+    if (!active && account.role === 'pimpinan') {
+      const existing = deactivationRequests.find(
+        (request) =>
+          request.accountId === account.id && request.status === 'menunggu',
+      )
+      if (!existing) {
+        deactivationRequests.unshift({
+          id: deactivationRequests.length + 1,
+          accountId: account.id,
+          status: 'menunggu',
+          requestedBy: user.name,
+          reason: 'Penonaktifan akun pimpinan memerlukan persetujuan pimpinan lain.',
+          createdAt: new Date().toISOString(),
+          decidedBy: null,
+          decidedAt: null,
+        })
+      }
+      throw new ApiError({
+        status: 422,
+        message:
+          'Penonaktifan akun pimpinan memerlukan persetujuan pimpinan lain.',
+        requiresApproval: true,
+        requestId: existing?.id ?? deactivationRequests[0].id,
+      })
+    }
     account.active = Boolean(active)
     return adaptAccount({
       id: account.id,
@@ -957,5 +1205,163 @@ export const admin = {
       is_active: account.active,
       must_change_password: account.mustChangePassword,
     })
+  },
+}
+
+const deactivationRequests = [
+  {
+    id: 1,
+    accountId: 8,
+    status: 'menunggu',
+    requestedBy: 'KH. Abdullah',
+    reason: 'Mutasi tugas ke lembaga lain.',
+    createdAt: new Date().toISOString(),
+    decidedBy: null,
+    decidedAt: null,
+  },
+]
+
+const auditSeed = [
+  {
+    id: 1,
+    waktu: new Date().toISOString(),
+    aktor: 'KH. Abdullah',
+    aktorRole: 'pimpinan',
+    aksi: 'login',
+    target: null,
+    laporanId: null,
+    detail: 'Masuk ke aplikasi.',
+    ip: '127.0.0.1',
+  },
+  {
+    id: 2,
+    waktu: new Date().toISOString(),
+    aktor: 'Ust. Rizal',
+    aktorRole: 'pengurus',
+    aksi: 'lihat_identitas',
+    target: 'Laporan #2',
+    laporanId: 2,
+    detail: 'Membuka identitas pelapor dengan persetujuan santri.',
+    ip: '127.0.0.1',
+  },
+  {
+    id: 3,
+    waktu: offsetDate(0),
+    aktor: 'Dewan Pengawas',
+    aktorRole: 'pengawas',
+    aksi: 'lihat_laporan',
+    target: 'Laporan #4',
+    laporanId: 4,
+    detail: 'Meninjau laporan yang menyangkut pimpinan.',
+    ip: '127.0.0.1',
+  },
+]
+
+const buildAuditLogs = () => {
+  const reportLogs = reportStore.slice(0, 6).map((report, index) => ({
+    id: 100 + index,
+    waktu: report.createdAt,
+    aktor: personName(report.ownerId) ?? 'Santri',
+    aktorRole: 'santri',
+    aksi: 'buat_laporan',
+    target: `Laporan #${report.noLaporan}`,
+    laporanId: report.id,
+    detail: 'Mengirim laporan baru.',
+    ip: '127.0.0.1',
+  }))
+  return [...auditSeed, ...reportLogs]
+}
+
+export const audit = {
+  async getAuditLogs({ q, action, from, to, page = 1, perPage = PAGE_SIZE } = {}) {
+    await delay()
+    const user = requireUser()
+    requireRole(user, ['pimpinan', 'pengawas'])
+    const needle = String(q ?? '').trim().toLowerCase()
+    const items = buildAuditLogs().filter((item) => {
+      const matchesAction = !action || item.aksi === action
+      const matchesFrom = !from || item.waktu >= from
+      const matchesTo = !to || item.waktu <= `${to}~`
+      const matchesQuery =
+        !needle ||
+        [item.aktor, item.target, item.detail]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(needle)
+      return matchesAction && matchesFrom && matchesTo && matchesQuery
+    })
+    items.sort((a, b) => String(b.waktu).localeCompare(String(a.waktu)))
+    const start = (page - 1) * perPage
+    return {
+      items: items.slice(start, start + perPage),
+      meta: adaptPagination(
+        {
+          current_page: page,
+          last_page: Math.max(1, Math.ceil(items.length / perPage)),
+          total: items.length,
+          per_page: perPage,
+        },
+        items.length,
+      ),
+    }
+  },
+}
+
+export const deactivation = {
+  async getRequests({ status = 'menunggu', page = 1, perPage = PAGE_SIZE } = {}) {
+    await delay()
+    const user = requireUser()
+    requireRole(user, ['pimpinan', 'pengawas'])
+    const items = deactivationRequests
+      .filter((item) => !status || item.status === status)
+      .map((item) => {
+        const account = accounts.find((entry) => entry.id === item.accountId)
+        return {
+          ...item,
+          accountName: account?.name ?? null,
+          accountRole: account?.role ?? 'pimpinan',
+        }
+      })
+    const start = (page - 1) * perPage
+    return {
+      items: items.slice(start, start + perPage),
+      meta: adaptPagination(
+        {
+          current_page: page,
+          last_page: Math.max(1, Math.ceil(items.length / perPage)),
+          total: items.length,
+          per_page: perPage,
+        },
+        items.length,
+      ),
+    }
+  },
+
+  async decideRequest(id, { status, alasan } = {}) {
+    await delay()
+    const user = requireUser()
+    requireRole(user, ['pimpinan'])
+    const request = deactivationRequests.find(
+      (item) => String(item.id) === String(id),
+    )
+    if (!request) fail(404, 'Pengajuan tidak ditemukan.')
+    if (!['disetujui', 'ditolak'].includes(status)) {
+      fail(422, 'Status keputusan tidak dikenal.')
+    }
+    request.status = status
+    request.decidedBy = user.name
+    request.decidedAt = new Date().toISOString()
+    request.reason = alasan ?? request.reason
+    if (status === 'disetujui') {
+      const account = accounts.find((item) => item.id === request.accountId)
+      if (account) account.active = false
+    }
+    const account = accounts.find((item) => item.id === request.accountId)
+    return {
+      ...request,
+      accountName: account?.name ?? null,
+      accountRole: account?.role ?? 'pimpinan',
+    }
   },
 }

@@ -7,4 +7,6 @@ export const reportKeys = {
   conversation: (id) => ['conversation', idKey(id)],
   summary: () => ['dashboard', 'summary'],
   accounts: (filters) => ['admin', 'accounts', filters],
+  audit: (filters) => ['admin', 'audit-logs', filters],
+  deactivation: (filters) => ['admin', 'deactivation-requests', filters],
 }

@@ -36,6 +36,7 @@ Salin `.env.example` menjadi `.env` bila perlu menyesuaikan:
 | --------------------------------- | ------- | --------------------------------------------- |
 | `VITE_API_URL`                    | `''`    | Origin API saja (mis. `https://api.example.com`); boleh kosong bila same-origin. |
 | `VITE_USE_MOCK`                   | `true`  | `true` memakai data contoh di dalam aplikasi. |
+| `VITE_USE_AI_MOCK`                | ikut `VITE_USE_MOCK` | `false` memakai AI asli backend; `true` memakai balasan tiruan. |
 | `VITE_IDLE_TIMEOUT_SECONDS`       | `180`   | Waktu henti otomatis akun santri (detik).     |
 | `VITE_STAFF_IDLE_TIMEOUT_SECONDS` | `900`   | Waktu henti otomatis akun petugas (detik).    |
 
@@ -46,7 +47,14 @@ Salin `.env.example` menjadi `.env` bila perlu menyesuaikan:
 | Santri    | `santri1`   | `santri123`  |
 | Santri    | `santri2`   | `santri123`  |
 | Pengurus  | `pengurus1` | `pengurus123`|
+| Pengurus  | `pengurus3` | `pengurus123`|
 | Pimpinan  | `pimpinan1` | `pimpinan123`|
+| Pimpinan  | `pimpinan2` | `pimpinan123`|
+| Pengawas  | `pengawas1` | `pengawas123`|
+
+Peran **pengawas** hanya melihat laporan sensitif (`menyangkut_pimpinan`),
+audit log, dan dashboard ringkasan; aksinya baca-saja. Menonaktifkan akun
+pimpinan memerlukan persetujuan melalui halaman **Persetujuan**.
 
 Akun `santri2` dan akun baru hasil impor akan diminta ganti kata sandi saat
 masuk pertama kali.
@@ -77,10 +85,11 @@ Kontrak endpoint yang dipakai aplikasi terdokumentasi di `API_ASSUMPTIONS.md`.
 src/
   api/        # klien HTTP + service (mock/real dipilih otomatis)
   components/ # komponen bersama: ui/ (primitif) + Brand, DemoBanner, dll
-  features/   # fitur: auth, reports, conversations, dashboard, accounts
+  features/   # fitur: auth, reports, conversations, ai-chat, dashboard, accounts,
+              # audit, deactivation
   layouts/    # PublicLayout, SantriLayout, StaffLayout
   lib/        # env, konstanta domain, format tanggal, CSV, cn
-  pages/      # halaman per peran (santri, staff, pimpinan) + umum
+  pages/      # halaman per peran (santri, staff, pimpinan, pengawas) + umum
   routes/     # AppRouter (rute + proteksi peran)
 ```
 
@@ -98,12 +107,15 @@ src/
   spesifik dimaksudkan untuk menggantikan kebijakan cache umum.
 - CSP membatasi koneksi ke `'self'` dan origin API yang tercantum pada
   `connect-src` di `public/_headers` dan `vercel.json`.
-- Tidak ada `dangerouslySetInnerHTML`, atau aset eksternal. Hanya `localStorage`
-  yang dipakai, itupun khusus token sesi; isi laporan/draf tidak pernah
-  disimpan di browser.
+- Tidak ada `dangerouslySetInnerHTML`, atau aset eksternal. `localStorage`
+  dipakai untuk token sesi dan riwayat Teman Cerita per akun (dihapus lewat
+  tombol "Mulai ulang"); isi laporan/draf tidak pernah disimpan di browser.
 - Identitas pelapor hanya terlihat petugas bila `tampilkan_identitas` aktif.
   Saat ini persetujuan permintaan pimpinan juga mengaktifkan flag itu, sehingga
   pengurus dan pimpinan sama-sama melihat nama; UI petugas tidak pernah
   menampilkan NIS/nomor santri.
-- Semua tanggal di UI petugas hanya menampilkan tanggal (tanpa jam).
+- Laporan `menyangkut_pimpinan` hanya dapat dibaca pelapor dan pengawas;
+  pengurus/pimpinan tidak menerimanya dari API. Pengawas bersifat baca-saja.
+- Semua tanggal di UI petugas hanya menampilkan tanggal (tanpa jam), kecuali
+  waktu pada audit log.
 - Keluar cepat tersedia di setiap halaman santri tanpa konfirmasi.

@@ -8,12 +8,13 @@ import {
   MessageCircle,
   Shield,
   ShieldCheck,
+  Sparkles,
   UsersRound,
   Hand,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import Button from '../../components/ui/Button'
 import ButtonLink from '../../components/ui/ButtonLink'
@@ -35,6 +36,7 @@ const schema = z.object({
     .trim()
     .min(20, 'Ceritakan sedikit lebih lengkap, minimal 20 karakter.'),
   tampilkan_identitas: z.boolean(),
+  menyangkut_pimpinan: z.boolean(),
 })
 
 const CATEGORY_STYLES = {
@@ -124,8 +126,10 @@ export default function CreateReportPage() {
   const createReport = useCreateReport()
   const toast = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const [created, setCreated] = useState(null)
+  const draftFromAi = location.state?.draft ?? null
 
   const {
     register,
@@ -137,15 +141,19 @@ export default function CreateReportPage() {
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      kategori: '',
-      isi: '',
-      tampilkan_identitas: false,
+      kategori: draftFromAi?.kategori ?? '',
+      isi: draftFromAi?.isi ?? '',
+      tampilkan_identitas: Boolean(draftFromAi?.tampilkanIdentitas),
+      menyangkut_pimpinan: Boolean(draftFromAi?.menyangkutPimpinan),
     },
   })
 
   const kategori = useWatch({ control, name: 'kategori' })
   const tampilkanIdentitas = Boolean(
     useWatch({ control, name: 'tampilkan_identitas' }),
+  )
+  const menyangkutPimpinan = Boolean(
+    useWatch({ control, name: 'menyangkut_pimpinan' }),
   )
   const kePimpinan = routesToPimpinan({ kategori })
 
@@ -155,6 +163,7 @@ export default function CreateReportPage() {
         kategori: values.kategori,
         isi: values.isi,
         tampilkan_identitas: values.tampilkan_identitas,
+        menyangkut_pimpinan: values.menyangkut_pimpinan,
       })
       toast.showToast('Laporan berhasil dibuat.', 'success')
       setCreated(report)
@@ -188,6 +197,16 @@ export default function CreateReportPage() {
         </div>
       </header>
 
+      {draftFromAi ? (
+        <div className="mb-3 flex items-start gap-2 rounded-2xl border border-primary/40 bg-amber/15 px-4 py-3 text-sm text-navy">
+          <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary-hover" />
+          <p>
+            Draf dari Teman Cerita sudah diisikan. Periksa dan ubah dulu sebelum
+            mengirim.
+          </p>
+        </div>
+      ) : null}
+
       <Card className={`${REPORT_CARD_SURFACE} mb-3 bg-[#fff1e9] p-4 sm:p-4`}>
         <div className="flex items-start gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#ff765c] text-white">
@@ -203,6 +222,27 @@ export default function CreateReportPage() {
               </a>
               .
             </p>
+          </div>
+        </div>
+      </Card>
+
+      <Card className={`${REPORT_CARD_SURFACE} mb-3 bg-[#edf6f0] p-4 sm:p-4`}>
+        <div className="flex items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#d9f0e1] text-[#34744e]">
+            <Sparkles aria-hidden="true" className="size-5" />
+          </span>
+          <div>
+            <h2 className="text-sm font-bold text-[#163b2f]">Belum siap menulis laporan?</h2>
+            <p className="mt-0.5 text-xs leading-5 text-[#6f746f]">
+              Cerita dulu dengan Teman Cerita. Kalau sudah siap, kami bantu
+              rapikan ceritamu menjadi draf laporan.
+            </p>
+            <Link
+              to="/santri/teman-cerita"
+              className="mt-2 inline-flex text-xs font-semibold text-primary-hover hover:underline"
+            >
+              Buka Teman Cerita →
+            </Link>
           </div>
         </div>
       </Card>
@@ -261,7 +301,15 @@ export default function CreateReportPage() {
           </fieldset>
         </Card>
 
-        {kePimpinan ? (
+        {menyangkutPimpinan ? (
+          <div className="flex items-start gap-2 rounded-2xl border border-[#e7a48f] bg-[#ffe3d9] px-4 py-3 text-sm text-[#7c2d17]">
+            <Shield aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+            <p>
+              Laporan yang menyangkut pimpinan hanya dapat dibaca oleh pengawas
+              dan tidak terlihat oleh pengurus atau pimpinan.
+            </p>
+          </div>
+        ) : kePimpinan ? (
           <div className="flex items-start gap-2 rounded-2xl border border-primary/40 bg-amber/15 px-4 py-3 text-sm text-navy">
             <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary-hover" />
             <p>Laporan tentang pengurus akan langsung diteruskan ke pimpinan.</p>
@@ -309,6 +357,18 @@ export default function CreateReportPage() {
               <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#537363]" />
               Kamu bisa mengubah pilihan ini kapan saja di halaman laporanmu.
             </p>
+            <div className="mt-3 border-t border-[#dbe7de] pt-3">
+              <Switch
+                id="menyangkut_pimpinan"
+                label="Laporan ini menyangkut pimpinan"
+                description="Aktifkan jika laporan berkaitan dengan perilaku pimpinan. Laporan hanya dibaca pengawas."
+                checked={menyangkutPimpinan}
+                className="!rounded-xl !border-0 !bg-[#fff1e9] !px-3 !py-2.5"
+                onChange={(next) =>
+                  setValue('menyangkut_pimpinan', next, { shouldDirty: true })
+                }
+              />
+            </div>
           </fieldset>
         </Card>
 

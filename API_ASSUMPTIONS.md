@@ -22,8 +22,10 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
   `{ current_password, password, password_confirmation }`; nama field
   `password` mengikuti error validasi aktual backend ("The password field is
   required."). Password baru minimal 8 karakter; respons `{ data: { ok } }`.
-- ⚠️ Asumsi bentuk `user`: `{ id, name, role, must_change_password }`, dengan
-  `role ∈ { santri, pengurus, pimpinan }`.
+- ⚠️ Asumsi bentuk `user`: `{ id, name, role, must_change_password, dashboard? }`,
+  dengan `role ∈ { santri, pengurus, pimpinan, pengawas }`. Bila `dashboard`
+  dikirim, frontend memakainya sebagai halaman awal setelah login; jika tidak,
+  halaman awal ditentukan dari peran.
 
 ## Notifikasi
 
@@ -125,8 +127,14 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
   kategori, isi, tampilkan_identitas, status, waktu }`. Frontend memakai `id`
   sebagai parameter detail, `no_laporan` sebagai nomor yang ditampilkan, dan
   `waktu` sebagai tanggal laporan.
-⚠️ Asumsi request: membuat laporan `{ kategori, isi, tampilkan_identitas }`;
-  server menentukan `users_id`, `no_laporan`, `status`, dan `waktu`.
+⚠️ Laporan sensitif memakai field `menyangkut_pimpinan` (boolean) yang dikirim
+  saat membuat laporan dan dikembalikan pada detail/daftar. Backend menentukan
+  `penerima = pengawas` untuk laporan ini. Laporan sensitif hanya boleh dibaca
+  pelapor (santri pemilik) dan peran `pengawas`; pengurus/pimpinan tidak
+  menerima laporan tersebut pada daftar maupun detail.
+⚠️ Asumsi request: membuat laporan `{ kategori, isi, tampilkan_identitas,
+  menyangkut_pimpinan }`; server menentukan `users_id`, `no_laporan`, `status`,
+  dan `waktu`.
   Memperbarui identitas `{ tampilkan_identitas }`;
   memperbarui status `{ status }`; eskalasi `{ tujuan, catatan }`; catatan
   internal `{ catatan }`; pesan percakapan `{ isi }`.
@@ -151,7 +159,8 @@ Field model yang digunakan frontend:
 Field tambahan berikut bukan bagian dari `$fillable` yang dikonfirmasi; UI
 hanya menggunakannya bila API memang mengirimkannya:
 
-- `penerima` (`pengurus` | `pimpinan`)
+- `penerima` (`pengurus` | `pimpinan` | `pengawas`)
+- `menyangkut_pimpinan` (boolean) — penanda laporan sensitif
 - `batas_klarifikasi`, `dieskalasi_tujuan`, `dieskalasi_catatan`,
   `dieskalasi_at`, `perlu_klarifikasi`
 - `pelapor_nama` — nama ditampilkan kepada pengurus dan pimpinan bila
@@ -186,9 +195,11 @@ dilampirkan berupa JPG/PNG atau PDF, maksimal 5 MB.
 ⚠️ Respons ringkasan `{ data: { total_santri, total_laporan,
 laporan_per_status: { baru, diproses, selesai }, laporan_per_kategori } }`.
 Frontend memetakan field ini melalui `adaptSummary` di `src/api/adapters.js`.
-Endpoint ini hanya digunakan untuk dashboard pimpinan. Dashboard pengurus
-menghitung ringkasan dari `GET /api/v1/reports` dan filter status, sehingga
-data yang dihitung mengikuti laporan yang memang dapat diakses peran tersebut.
+Endpoint ini digunakan untuk dashboard pimpinan dan pengawas; ringkasan
+pengawas juga membaca `laporan_baru`, `laporan_sensitif`, dan `audit_hari_ini`
+bila dikirim. Dashboard pengurus menghitung ringkasan dari `GET /api/v1/reports`
+dan filter status, sehingga data yang dihitung mengikuti laporan yang memang
+dapat diakses peran tersebut.
 
 ## Impor dan ekspor santri (Excel)
 
@@ -243,8 +254,78 @@ Field akun: `{ id, name, email, role, is_active, must_change_password }`.
 Jika backend memakai jalur/bentuk lain, sesuaikan di `src/api/services/admin.js`
 dan `adaptAccount` di `src/api/adapters.js`.
 
-Bila hanya import yang tersedia dan tidak ada CRUD akun, buang/umpan-kunci
-seksi "Akun Petugas" di `src/pages/pimpinan/AccountsPage.jsx`.
+Menonaktifkan akun **pimpinan** memerlukan persetujuan dua orang. Asumsi
+kontrak: `PATCH /admin/accounts/{id}/status` dengan `{ active: false }`
+mengembalikan `422` berisi `{ requires_approval: true, request_id }`. Frontend
+menangkap sinyal itu (field `requiresApproval`/`requestId` pada `ApiError`) dan
+menampilkan modal persetujuan. Pengajuan lalu diputuskan lewat endpoint
+persetujuan di bawah. Menonaktifkan akun pengurus tidak memerlukan persetujuan.
+
+### Persetujuan penonaktifan akun
+
+- ⚠️ `GET /api/v1/admin/deactivation-requests` — daftar pengajuan; item
+  `{ id, account_id, nama, role, status, diminta_oleh, dibuat, diputuskan }`.
+  `status ∈ { menunggu, disetujui, ditolak }`.
+- ⚠️ `PATCH /api/v1/admin/deactivation-requests/{id}` — `{ status, catatan? }`
+  dengan `status = disetujui | ditolak`. Hanya pimpinan yang dapat memutuskan.
+  Backend menonaktifkan akun saat pengajuan disetujui.
+- Frontend memakai `GET /admin/deactivation-requests` dan
+  `PATCH /admin/deactivation-requests/{id}` melalui
+  `src/api/services/deactivation.js`; halaman ada di
+  `/dashboard/pimpinan/pengajuan`.
+
+## Audit log
+
+- ✅ `GET /api/v1/admin/audit-logs` — `?page=&per_page=&action=&actor_id=`
+  mengembalikan `{ data: [...], meta }`. Adapter menerima item
+  `{ id, action, actor, target, keterangan, created_at }` atau bentuk datar
+  (`actor_name`, `target_type`, `target_id`) dan menormalkannya.
+- Halaman `/dashboard/pengawas/audit` dan `/dashboard/pimpinan/audit` dipakai
+  untuk menelusuri tindakan sensitif (mis. perubahan status, akses laporan
+  sensitif, penonaktifan akun). Waktu audit memakai tanggal + jam
+  (`formatDateTime`); tanggal laporan lain tetap tanpa jam.
+
+## Teman Cerita (AI)
+
+Fitur ini berjalan dengan AI asli saat `VITE_USE_AI_MOCK=false`, atau dengan
+balasan tiruan saat `VITE_USE_AI_MOCK=true`. Bila variabel itu tidak diisi,
+nilainya mengikuti `VITE_USE_MOCK` (mock → AI tiruan, API asli → AI asli).
+Frontend memakai endpoint berikut (⚠️ belum masuk kontrak beku):
+
+- ⚠️ `POST /chat` (base `VITE_API_URL + "/api"`, sehingga menjadi `/api/chat`
+  sesuai route backend saat ini; bukan lagi `/api/v1/ai/chat`)
+  - Request: `{ message, history: [{ role, text }] }`; `history` berisi
+    pertukaran sebelumnya (`role = user | model`, dengan cadangan `ai`), `message`
+    maksimal 1000 karakter. Backend menolak role `assistant`; bila `model` dan
+    `ai` juga ditolak, frontend mengirim ulang tanpa riwayat.
+  - Respons yang didukung: `{ message, history: [{ role, text }] }` atau
+    `{ data: { reply | message, history?, suggestions?, risk?, offer_report? } }`.
+    Adapter `adaptAiReply` mengambil balasan terakhir dari `history` atau field
+    `reply`/`message`.
+  - Bila backend tidak mengirim `offer_report`, frontend menawarkannya setelah
+    minimal 3 giliran pengguna dan ada balasan.
+  - `suggestions` array string untuk tombol jawaban cepat.
+  - `risk` bernilai `low` atau `high`; `high` memicu banner keselamatan.
+- ⚠️ `POST /api/v1/ai/conversations/{id}/draft`
+  - Respons: `{ data: { kategori, isi } }`; frontend selalu memakai
+    `tampilkan_identitas: false` untuk draf. Bila respons tidak berisi draf,
+    frontend menyusun draf dari riwayat pesan memakai `src/lib/aiDraft.js`.
+- Frontend memakai timeout 60 detik khusus untuk endpoint AI.
+
+Batas yang wajib dijaga backend:
+
+- API key model AI hanya di server; tidak pernah dikirim ke browser.
+- System prompt, moderasi keluaran, deteksi risiko, dan rate limit dijalankan
+  di server, bukan hanya mengandalkan prompt.
+- Percakapan hanya dapat diakses pemiliknya (santri). Petugas/pimpinan tidak
+  menerima isi percakapan AI.
+- Jangan meminta atau menyimpan nama pelapor di percakapan AI.
+- Balasan maksimal 1–3 kalimat, tidak mendiagnosis, tidak menjanjikan hal yang
+  tidak bisa ditepati, dan mengarahkan ke pengurus/ustaz atau SAPA 129 bila ada
+  tanda bahaya.
+- Chat tidak boleh otomatis membuat laporan. Draf hanya dibuat setelah santri
+  meminta, lalu santri tetap mengirim laporan sendiri.
+- Tetapkan kebijakan retensi dan penghapusan percakapan sebelum rilis produksi.
 
 ## Asumsi error
 
@@ -253,7 +334,9 @@ seksi "Akun Petugas" di `src/pages/pimpinan/AccountsPage.jsx`.
 - `401` → token kedaluwarsa → logout otomatis.
 - `403` → akses ditolak (angka `403`/login sengaja tidak diberitahu).
 - `404` → laporan/akun tidak ditemukan.
-- `422` → validasi; `{ errors: { field: [pesan] } }` bila ada.
+- `422` → validasi; `{ errors: { field: [pesan] } }` bila ada. Khusus
+  penonaktifan akun pimpinan, `{ requires_approval: true, request_id }`
+  memicu alur persetujuan dua orang alih-alih pesan error biasa.
 - `429` → batas harian laporan tercapai.
 
 ## Pemeriksaan kesehatan (health check)
