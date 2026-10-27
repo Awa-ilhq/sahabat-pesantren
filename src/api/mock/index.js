@@ -911,6 +911,39 @@ export const dashboard = {
       laporan_per_kategori: countBy(reportStore, 'kategori'),
     })
   },
+
+  async getAiSummary({ periode = 7 } = {}) {
+    await delay()
+    const user = requireUser()
+    requireRole(user, ['pimpinan', 'pengawas'])
+
+    const since = Date.now() - Number(periode) * 24 * 60 * 60 * 1000
+    const recent = reportStore.filter((report) => {
+      const createdAt = Date.parse(report.createdAt)
+      return Number.isFinite(createdAt) && createdAt >= since
+    })
+
+    const ringkasan = recent.length
+      ? `Dalam ${periode} hari terakhir ada ${recent.length} laporan yang masuk dengan pola utama pada kategori ${countBy(recent, 'kategori') ? Object.entries(countBy(recent, 'kategori')).sort((a, b) => b[1] - a[1])[0][0] : 'umum'}. Status laporan masih didominasi oleh proses yang sedang berjalan.`
+      : `Belum ada laporan pada ${periode} hari terakhir.`
+
+    const poin = recent.length
+      ? [
+          `Jumlah laporan: ${recent.length}`,
+          `Status terbanyak: ${Object.entries(countBy(recent, 'status')).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'baru'}`,
+          `Laporan sensitif: ${reportStore.filter((item) => item.menyangkutPimpinan).length}`,
+        ]
+      : ['Belum ada laporan baru dalam periode ini.']
+
+    return {
+      jumlah_laporan: recent.length,
+      periode_hari: Number(periode),
+      dibuat_pada: new Date().toISOString(),
+      ringkasan,
+      poin,
+      dari_cache: false,
+    }
+  },
 }
 
 const previewSantriImport = async (file) => {

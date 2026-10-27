@@ -1,13 +1,14 @@
 import {
   BarChart3,
   ClipboardList,
+  Sparkles,
   TrendingUp,
   UsersRound,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ErrorState from '../../components/ui/ErrorState'
 import Skeleton from '../../components/ui/Skeleton'
-import { useSummary } from '../../features/dashboard/hooks'
+import { useAiSummary, useSummary } from '../../features/dashboard/hooks'
 import { StatusBadge } from '../../features/reports/components/badges'
 import {
   CATEGORIES,
@@ -73,6 +74,12 @@ function Breakdown({ title, entries }) {
 
 export default function DashboardPage() {
   const { data, isLoading, isError, refetch } = useSummary()
+  const {
+    data: aiData,
+    isLoading: aiLoading,
+    isError: aiError,
+    refetch: refetchAi,
+  } = useAiSummary({ periode: 7 })
 
   if (isLoading) {
     return (
@@ -161,7 +168,48 @@ export default function DashboardPage() {
             Lihat semua laporan
           </Link>
         </div>
+      </div>
 
+      <div className="rounded-3xl border border-[#e1e9e2] bg-white p-5 shadow-[0_2px_10px_rgba(18,55,42,0.06)]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Sparkles aria-hidden="true" className="size-5 text-primary" />
+            <h2 className="text-lg font-semibold text-navy">Ringkasan AI</h2>
+          </div>
+          {aiData?.dari_cache ? (
+            <span className="rounded-full bg-[#edf6ef] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary-hover">
+              cache
+            </span>
+          ) : null}
+        </div>
+
+        {aiLoading ? (
+          <Skeleton className="mt-4 h-20 w-full" />
+        ) : aiError ? (
+          <div className="mt-4 rounded-2xl border border-[#f1d5d5] bg-[#fff5f5] p-4 text-sm text-danger">
+            Ringkasan AI gagal dimuat.
+            <button
+              type="button"
+              onClick={() => refetchAi()}
+              className="ml-2 font-semibold text-danger underline underline-offset-2"
+            >
+              Coba lagi
+            </button>
+          </div>
+        ) : aiData ? (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm leading-6 text-navy">
+              {aiData.ringkasan}
+            </p>
+            {Array.isArray(aiData.poin) && aiData.poin.length ? (
+              <ul className="list-disc space-y-1 pl-5 text-sm text-body">
+                {aiData.poin.map((item, index) => (
+                  <li key={`${item}-${index}`}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {kategoriEntries.length ? (

@@ -11,3 +11,11 @@ export const useSummary = () =>
     queryFn: () => api.dashboard.getSummary(),
     retry: retryUnlessClientError,
   })
+
+export const useAiSummary = ({ periode = 7, refresh = false } = {}) =>
+  useQuery({
+    queryKey: ['dashboard', 'ai-summary', periode, refresh],
+    queryFn: () => api.dashboard.getAiSummary({ periode, refresh }),
+    retry: retryUnlessClientError,
+    enabled: Boolean(api.dashboard?.getAiSummary),
+  })
