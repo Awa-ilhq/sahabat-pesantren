@@ -41,6 +41,12 @@ const NAV_ITEMS = [
     roles: ['pengurus'],
   },
   {
+    to: '/petugas/audit',
+    label: 'Aktivitas',
+    icon: History,
+    roles: ['pengurus'],
+  },
+  {
     to: '/dashboard/pengawas',
     label: 'Dashboard',
     icon: LayoutDashboard,

@@ -74,10 +74,7 @@ const findReport = (id) =>
 
 const canView = (user, report) => {
   if (user.role === 'santri') return report.ownerId === user.id
-  if (report.menyangkutPimpinan || report.penerima === 'pengawas') {
-    return user.role === 'pengawas'
-  }
-  if (user.role === 'pengawas') return false
+  if (user.role === 'pengawas') return Boolean(report.menyangkutPimpinan)
   if (user.role === 'pengurus') return report.penerima === 'pengurus'
   return true
 }
@@ -244,7 +241,10 @@ const toRawReport = (report, viewer) => {
     kategori: report.kategori,
     isi: report.isi,
     tampilkan_identitas: report.tampilkanIdentitas,
-    menyangkut_pimpinan: Boolean(report.menyangkutPimpinan),
+    menyangkut_pimpinan:
+      viewer.role === 'pengawas' || viewer.role === 'santri'
+        ? Boolean(report.menyangkutPimpinan)
+        : false,
     status: report.status,
     penerima: report.penerima,
     batas_klarifikasi: report.batasKlarifikasi,
@@ -257,11 +257,11 @@ const toRawReport = (report, viewer) => {
     perlu_klarifikasi: report.perluKlarifikasi,
     catatan_internal: isStaff
       ? report.notes.map((note) => ({
-          id: note.id,
-          author_name: note.authorName,
-          body: note.body,
-          created_at: note.createdAt,
-        }))
+        id: note.id,
+        author_name: note.authorName,
+        body: note.body,
+        created_at: note.createdAt,
+      }))
       : undefined,
   }
 }
@@ -364,11 +364,9 @@ export const reports = {
     const menyangkutPimpinan = Boolean(
       payload.menyangkut_pimpinan ?? payload.menyangkutPimpinan,
     )
-    const penerima = menyangkutPimpinan
-      ? 'pengawas'
-      : routesToPimpinan({ kategori: payload.kategori })
-        ? 'pimpinan'
-        : 'pengurus'
+    const penerima = routesToPimpinan({ kategori: payload.kategori })
+      ? 'pimpinan'
+      : 'pengurus'
 
     const report = {
       id,
@@ -443,6 +441,31 @@ export const reports = {
     const report = accessibleReport(user, id)
     markReportRead(user, report)
     return adaptReport(toRawReport(report, user))
+  },
+
+  async getTrail(id) {
+    await delay()
+    const user = requireUser()
+    const report = findReport(id)
+    if (!report || report.ownerId !== user.id) {
+      fail(404, 'Laporan tidak ditemukan.')
+    }
+    const trail = []
+    if (report.status !== 'baru') {
+      trail.push({
+        aksi: 'dibuka',
+        peran: report.penerima,
+        tanggal: report.createdAt,
+        status: null,
+      })
+      trail.push({
+        aksi: 'status_diubah',
+        peran: report.penerima,
+        tanggal: report.createdAt,
+        status: report.status,
+      })
+    }
+    return trail
   },
 
   async updateIdentity(id, tampilkanIdentitas) {
@@ -673,11 +696,11 @@ export const ai = {
 
     const stories = conversation
       ? conversation.messages
-          .filter((item) => item.role === 'user')
-          .map((item) => item.body)
+        .filter((item) => item.role === 'user')
+        .map((item) => item.body)
       : (Array.isArray(messages) ? messages : [])
-          .filter((item) => item.role === 'user' && item.body?.trim())
-          .map((item) => item.body.trim())
+        .filter((item) => item.role === 'user' && item.body?.trim())
+        .map((item) => item.body.trim())
     if (!stories.length) {
       fail(422, 'Belum ada cerita yang bisa dijadikan draf.')
     }
@@ -940,7 +963,7 @@ const previewSantriImport = async (file) => {
       (account) =>
         account.id !== existing?.id &&
         (account.nis ?? (account.role === 'santri' ? account.username : null)) ===
-          nisKey,
+        nisKey,
     )
     if (nisKey && (seenNis.has(nisKey) || existingNis)) {
       addError('nis', 'NIS sudah digunakan.')
@@ -1227,10 +1250,10 @@ const auditSeed = [
     waktu: new Date().toISOString(),
     aktor: 'KH. Abdullah',
     aktorRole: 'pimpinan',
-    aksi: 'login',
+    aksi: 'account.deactivated',
     target: null,
     laporanId: null,
-    detail: 'Masuk ke aplikasi.',
+    detail: 'Menonaktifkan akun santri.',
     ip: '127.0.0.1',
   },
   {
@@ -1238,7 +1261,7 @@ const auditSeed = [
     waktu: new Date().toISOString(),
     aktor: 'Ust. Rizal',
     aktorRole: 'pengurus',
-    aksi: 'lihat_identitas',
+    aksi: 'identity.requested',
     target: 'Laporan #2',
     laporanId: 2,
     detail: 'Membuka identitas pelapor dengan persetujuan santri.',
@@ -1249,7 +1272,7 @@ const auditSeed = [
     waktu: offsetDate(0),
     aktor: 'Dewan Pengawas',
     aktorRole: 'pengawas',
-    aksi: 'lihat_laporan',
+    aksi: 'report.viewed',
     target: 'Laporan #4',
     laporanId: 4,
     detail: 'Meninjau laporan yang menyangkut pimpinan.',
@@ -1261,12 +1284,12 @@ const buildAuditLogs = () => {
   const reportLogs = reportStore.slice(0, 6).map((report, index) => ({
     id: 100 + index,
     waktu: report.createdAt,
-    aktor: personName(report.ownerId) ?? 'Santri',
-    aktorRole: 'santri',
-    aksi: 'buat_laporan',
+    aktor: 'Ust. Rizal',
+    aktorRole: 'pengurus',
+    aksi: 'report.viewed',
     target: `Laporan #${report.noLaporan}`,
     laporanId: report.id,
-    detail: 'Mengirim laporan baru.',
+    detail: 'Membuka laporan.',
     ip: '127.0.0.1',
   }))
   return [...auditSeed, ...reportLogs]
@@ -1276,9 +1299,18 @@ export const audit = {
   async getAuditLogs({ q, action, from, to, page = 1, perPage = PAGE_SIZE } = {}) {
     await delay()
     const user = requireUser()
-    requireRole(user, ['pimpinan', 'pengawas'])
+    requireRole(user, ['pengurus', 'pimpinan', 'pengawas'])
     const needle = String(q ?? '').trim().toLowerCase()
-    const items = buildAuditLogs().filter((item) => {
+    // Pengawas melihat semua, pimpinan aksi pengurus dan pimpinan,
+    // pengurus hanya aksi pengurus (pendekatan sederhana untuk demo).
+    const scoped = buildAuditLogs().filter((item) => {
+      if (user.role === 'pengawas') return true
+      if (user.role === 'pimpinan') {
+        return item.aktorRole === 'pengurus' || item.aktorRole === 'pimpinan'
+      }
+      return item.aktorRole === 'pengurus'
+    })
+    const items = scoped.filter((item) => {
       const matchesAction = !action || item.aksi === action
       const matchesFrom = !from || item.waktu >= from
       const matchesTo = !to || item.waktu <= `${to}~`

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import Mascot from '../components/Mascot'
 
 const QUESTIONS = [
   {
@@ -141,6 +142,7 @@ export default function HomePage() {
           <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
             <div className="absolute -inset-4 rounded-[45%] bg-white/40 blur-2xl" />
             <ConversationIllustration />
+            <Mascot className="absolute -top-4 left-2 z-20 size-24 sm:size-28" />
             <div className="absolute bottom-8 left-0 z-20 rounded-2xl bg-white px-4 py-3 shadow-[0_12px_30px_rgba(18,55,42,0.12)] sm:bottom-10 sm:left-2">
               <p className="text-xs font-medium text-body">Namamu</p>
               <p className="font-extrabold text-navy">disembunyikan</p>

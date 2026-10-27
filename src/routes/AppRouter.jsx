@@ -106,6 +106,14 @@ export default function AppRouter() {
             }
           />
           <Route path="laporan/:id" element={<StaffReportDetailPage />} />
+          <Route
+            path="audit"
+            element={
+              <RequireAuth roles={[ROLES.PENGURUS]}>
+                <AuditLogPage />
+              </RequireAuth>
+            }
+          />
           <Route path="notifikasi" element={<NotifikasiPage />} />
           <Route path="profil" element={<ProfilePage />} />
         </Route>

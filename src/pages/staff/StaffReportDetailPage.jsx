@@ -185,7 +185,9 @@ export default function StaffReportDetailPage() {
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <CategoryBadge kategori={report.kategori} />
-          {report.menyangkutPimpinan ? <SensitiveBadge /> : null}
+          {user?.role === ROLES.PENGAWAS && report.menyangkutPimpinan ? (
+            <SensitiveBadge />
+          ) : null}
         </div>
 
         <dl className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -227,26 +229,26 @@ export default function StaffReportDetailPage() {
       {user?.role !== ROLES.PENGAWAS ? (
         <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
           <h2 className="text-xl">Tindakan</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Select
-            id="ubah-status"
-            label="Ubah status"
-            options={STATUSES}
-            value={report.status}
-            disabled={updateStatus.isPending}
-            onChange={handleStatusChange}
-          />
-          <div className="flex items-end">
-            <Button
-              variant="secondary"
-              onClick={() => setEscalateOpen(true)}
-              className="w-full"
-            >
-              <Share2 aria-hidden="true" className="size-4" />
-              Teruskan laporan
-            </Button>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Select
+              id="ubah-status"
+              label="Ubah status"
+              options={STATUSES}
+              value={report.status}
+              disabled={updateStatus.isPending}
+              onChange={handleStatusChange}
+            />
+            <div className="flex items-end">
+              <Button
+                variant="secondary"
+                onClick={() => setEscalateOpen(true)}
+                className="w-full"
+              >
+                <Share2 aria-hidden="true" className="size-4" />
+                Teruskan laporan
+              </Button>
+            </div>
           </div>
-        </div>
         </Card>
       ) : null}
 
@@ -259,63 +261,63 @@ export default function StaffReportDetailPage() {
       ) : null}
 
       {user?.role !== ROLES.PENGAWAS ? (
-      <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
-        <h2 className="flex items-center gap-2 text-xl">
-          <StickyNote aria-hidden="true" className="size-5 text-primary" />
-          Catatan internal
-        </h2>
-        <p className="mt-0.5 text-sm text-body">
-          Hanya terlihat oleh petugas. Pelapor tidak bisa membaca catatan ini.
-        </p>
+        <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
+          <h2 className="flex items-center gap-2 text-xl">
+            <StickyNote aria-hidden="true" className="size-5 text-primary" />
+            Catatan internal
+          </h2>
+          <p className="mt-0.5 text-sm text-body">
+            Hanya terlihat oleh petugas. Pelapor tidak bisa membaca catatan ini.
+          </p>
 
-        <ul className="mt-4 flex flex-col gap-3">
-          {report.catatan.length ? (
-            report.catatan.map((note) => (
-              <li
-                key={note.id}
-                className="rounded-2xl border border-border bg-white p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-body">
-                  <span className="font-semibold text-primary">
-                    {note.authorName ?? 'Nama pengirim tidak tersedia'}
-                  </span>
-                  <span>{formatDateOnly(note.createdAt)}</span>
-                </div>
-                <p className="mt-2 text-sm text-navy" data-pre-wrap>
-                  {note.body}
-                </p>
+          <ul className="mt-4 flex flex-col gap-3">
+            {report.catatan.length ? (
+              report.catatan.map((note) => (
+                <li
+                  key={note.id}
+                  className="rounded-2xl border border-border bg-white p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-body">
+                    <span className="font-semibold text-primary">
+                      {note.authorName ?? 'Nama pengirim tidak tersedia'}
+                    </span>
+                    <span>{formatDateOnly(note.createdAt)}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-navy" data-pre-wrap>
+                    {note.body}
+                  </p>
+                </li>
+              ))
+            ) : (
+              <li className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-body">
+                Belum ada catatan internal.
               </li>
-            ))
-          ) : (
-            <li className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-body">
-              Belum ada catatan internal.
-            </li>
-          )}
-        </ul>
+            )}
+          </ul>
 
-        <form onSubmit={submitNote} className="mt-4" autoComplete="off" noValidate>
-          <Textarea
-            id="note-body"
-            label="Tambah catatan"
-            rows={3}
-            autoComplete="off"
-            placeholder="Tulis catatan untuk sesama petugas…"
-            value={noteBody}
-            onChange={(event) => setNoteBody(event.target.value)}
-          />
-          <div className="mt-3 flex justify-end">
-            <Button
-              type="submit"
-              size="sm"
-              loading={addNote.isPending}
-              disabled={!noteBody.trim()}
-            >
-              <Send aria-hidden="true" className="size-4" />
-              Simpan catatan
-            </Button>
-          </div>
-        </form>
-      </Card>
+          <form onSubmit={submitNote} className="mt-4" autoComplete="off" noValidate>
+            <Textarea
+              id="note-body"
+              label="Tambah catatan"
+              rows={3}
+              autoComplete="off"
+              placeholder="Tulis catatan untuk sesama petugas…"
+              value={noteBody}
+              onChange={(event) => setNoteBody(event.target.value)}
+            />
+            <div className="mt-3 flex justify-end">
+              <Button
+                type="submit"
+                size="sm"
+                loading={addNote.isPending}
+                disabled={!noteBody.trim()}
+              >
+                <Send aria-hidden="true" className="size-4" />
+                Simpan catatan
+              </Button>
+            </div>
+          </form>
+        </Card>
       ) : null}
 
       <Modal

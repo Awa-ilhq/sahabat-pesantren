@@ -99,17 +99,19 @@ export const reportDetailPath = (role, id) => {
 
 export const AUDIT_ACTION_OPTIONS = [
   { value: '', label: 'Semua aksi' },
-  { value: 'login', label: 'Masuk' },
-  { value: 'logout', label: 'Keluar' },
-  { value: 'lihat_laporan', label: 'Melihat laporan' },
-  { value: 'lihat_identitas', label: 'Melihat identitas' },
-  { value: 'ubah_status', label: 'Mengubah status' },
-  { value: 'eskalasi', label: 'Meneruskan laporan' },
-  { value: 'buat_laporan', label: 'Membuat laporan' },
-  { value: 'kirim_pesan', label: 'Mengirim pesan' },
-  { value: 'nonaktifkan_akun', label: 'Menonaktifkan akun' },
-  { value: 'setujui_penonaktifan', label: 'Menyetujui penonaktifan' },
-  { value: 'tolak_penonaktifan', label: 'Menolak penonaktifan' },
+  { value: 'report.viewed', label: 'Membuka laporan' },
+  { value: 'report.status_changed', label: 'Mengubah status' },
+  { value: 'report.message_sent', label: 'Membalas pesan' },
+  { value: 'report.note_added', label: 'Menambah catatan internal' },
+  { value: 'report.escalated', label: 'Meneruskan laporan' },
+  { value: 'identity.requested', label: 'Meminta nama pelapor' },
+  { value: 'identity.responded', label: 'Menjawab permintaan nama' },
+  { value: 'identity.toggled', label: 'Mengubah tampilan nama' },
+  { value: 'account.activated', label: 'Mengaktifkan akun' },
+  { value: 'account.deactivated', label: 'Menonaktifkan akun' },
+  { value: 'deactivation.requested', label: 'Mengajukan penonaktifan' },
+  { value: 'deactivation.approved', label: 'Menyetujui penonaktifan' },
+  { value: 'deactivation.rejected', label: 'Menolak penonaktifan' },
 ]
 
 export const AUDIT_ACTION_LABELS = Object.fromEntries(

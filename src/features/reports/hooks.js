@@ -32,6 +32,14 @@ export const useReport = (id) =>
     retry: retryUnlessClientError,
   })
 
+export const useReportTrail = (id) =>
+  useQuery({
+    queryKey: reportKeys.trail(id),
+    queryFn: () => api.reports.getTrail(id),
+    enabled: Boolean(id),
+    retry: retryUnlessClientError,
+  })
+
 export const useStaffReports = (filters) =>
   useQuery({
     queryKey: reportKeys.staff({

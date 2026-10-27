@@ -305,8 +305,8 @@ export default function CreateReportPage() {
           <div className="flex items-start gap-2 rounded-2xl border border-[#e7a48f] bg-[#ffe3d9] px-4 py-3 text-sm text-[#7c2d17]">
             <Shield aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
             <p>
-              Laporan yang menyangkut pimpinan hanya dapat dibaca oleh pengawas
-              dan tidak terlihat oleh pengurus atau pimpinan.
+              Laporan ini tetap dibaca pengurus dan pimpinan seperti laporan
+              lain. Pengawas ikut menerimanya agar penanganannya dipantau.
             </p>
           </div>
         ) : kePimpinan ? (
@@ -361,7 +361,7 @@ export default function CreateReportPage() {
               <Switch
                 id="menyangkut_pimpinan"
                 label="Laporan ini menyangkut pimpinan"
-                description="Aktifkan jika laporan berkaitan dengan perilaku pimpinan. Laporan hanya dibaca pengawas."
+                description="Aktifkan jika laporan berkaitan dengan perilaku pimpinan. Pengawas akan ikut menerima laporan ini."
                 checked={menyangkutPimpinan}
                 className="!rounded-xl !border-0 !bg-[#fff1e9] !px-3 !py-2.5"
                 onChange={(next) =>

@@ -3,8 +3,8 @@ import { useDeferredValue, useState } from 'react'
 import EmptyState from '../../components/ui/EmptyState'
 import ErrorState from '../../components/ui/ErrorState'
 import Pagination from '../../components/ui/Pagination'
-import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
+import { useAuth } from '../../features/auth/auth-context'
 import { useAuditLogs } from '../../features/audit/hooks'
 import {
   AUDIT_ACTION_LABELS,
@@ -13,6 +13,8 @@ import {
 import { formatDateTime } from '../../lib/formatDate'
 
 export default function AuditLogPage() {
+  const { user } = useAuth()
+  const ownOnly = user?.role === 'pengurus'
   const [query, setQuery] = useState('')
   const [action, setAction] = useState('')
   const [page, setPage] = useState(1)
@@ -33,14 +35,16 @@ export default function AuditLogPage() {
           Jejak aktivitas
         </span>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
-          Log audit
+          {ownOnly ? 'Aktivitas saya' : 'Log audit'}
         </h1>
         <p className="mt-1 text-sm text-body">
-          Catatan siapa mengakses laporan dan mengubah data penting.
+          {ownOnly
+            ? 'Catatan aksimu pada laporan. Hanya bisa dibaca, tidak bisa diubah.'
+            : 'Catatan siapa mengakses laporan dan mengubah data penting.'}
         </p>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_16rem]">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem] sm:items-center">
         <label className="relative block">
           <span className="sr-only">Cari log</span>
           <Search
@@ -58,17 +62,35 @@ export default function AuditLogPage() {
             className="h-12 w-full rounded-full border border-line bg-white pl-11 pr-4 text-sm text-navy shadow-sm outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/20"
           />
         </label>
-        <Select
-          id="audit-action"
-          label="Aksi"
-          options={AUDIT_ACTION_OPTIONS}
-          value={action}
-          className="h-12 rounded-full py-0 text-sm"
-          onChange={(event) => {
-            setAction(event.target.value)
-            setPage(1)
-          }}
-        />
+
+        <div className="relative">
+          <label htmlFor="audit-action" className="sr-only">
+            Aksi
+          </label>
+          <select
+            id="audit-action"
+            value={action}
+            onChange={(event) => {
+              setAction(event.target.value)
+              setPage(1)
+            }}
+            className="h-12 w-full appearance-none rounded-full border border-line bg-white px-4 pr-10 text-sm text-navy shadow-sm transition focus:border-primary focus:outline-none focus:ring-3 focus:ring-primary/20"
+          >
+            {AUDIT_ACTION_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            fill="none"
+            className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-body"
+          >
+            <path d="M5 7.5 10 12.5 15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
       </div>
 
       {isError ? (
@@ -88,7 +110,7 @@ export default function AuditLogPage() {
             {items.map((log) => (
               <li
                 key={log.id}
-                className="rounded-3xl bg-white p-4 shadow-[0_8px_24px_rgba(18,55,42,0.06)]"
+                className="rounded-3xl border border-[#dfe7df] bg-white p-4 shadow-[0_4px_12px_rgba(18,55,42,0.04)]"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-semibold text-navy">

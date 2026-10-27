@@ -53,10 +53,8 @@ const canViewReport = (report, role, userId) => {
   ) {
     return false
   }
-  // Laporan yang menyangkut pimpinan hanya untuk pengawas dan pelapornya.
-  if (report.menyangkutPimpinan) {
-    return role === ROLES.PENGAWAS || role === ROLES.SANTRI
-  }
+  // Pengawas hanya melihat laporan yang ditandai menyangkut pimpinan.
+  if (role === ROLES.PENGAWAS) return Boolean(report.menyangkutPimpinan)
   if (role === ROLES.PENGURUS && report.kategori === 'masalah_pengurus') {
     return false
   }
@@ -216,4 +214,8 @@ export const answerIdentityRequest = async (id, status) => {
       ),
     ),
   )
+}
+export const getTrail = async (id) => {
+  const { data } = await http.get(`/reports/${id}/trail`)
+  return Array.isArray(data?.data) ? data.data : []
 }

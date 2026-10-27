@@ -10,6 +10,7 @@ import Switch from '../../components/ui/Switch'
 import { useToast } from '../../components/ui/toast-context'
 import { Conversation } from '../../features/conversations/Conversation'
 import IdentityRequestSantri from '../../features/identity/IdentityRequestSantri'
+import ReportTrail from '../../features/reports/components/ReportTrail'
 import {
   CategoryBadge,
   StatusBadge,
@@ -131,6 +132,8 @@ export default function SantriReportDetailPage() {
           onChange={toggleIdentity}
         />
       </Card>
+
+      <ReportTrail id={id} createdAt={report.createdAt} />
 
       <Conversation id={id} viewer="santri" />
     </div>
