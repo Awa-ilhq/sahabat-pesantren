@@ -1,4 +1,3 @@
-import Card from '../../../components/ui/Card'
 import Skeleton from '../../../components/ui/Skeleton'
 import { ROLE_LABELS } from '../../../lib/constants'
 import { formatDateOnly } from '../../../lib/formatDate'
@@ -27,7 +26,7 @@ export default function ReportTrail({ id, createdAt }) {
   ]
 
   return (
-    <Card className="p-5 sm:p-6">
+    <div className="rounded-3xl border border-[#e1e9e2] bg-white p-5 shadow-[0_2px_10px_rgba(18,55,42,0.06)] sm:p-6">
       <h2 className="text-lg font-extrabold tracking-tight text-navy">
         Jejak laporan
       </h2>
@@ -63,6 +62,6 @@ export default function ReportTrail({ id, createdAt }) {
           ))}
         </ol>
       )}
-    </Card>
+    </div>
   )
 }
