@@ -234,7 +234,7 @@ export const reports = [
     noLaporan: 6,
     ownerId: 2,
     kategori: 'perundungan',
-    isi: 'Saya dikucilkan dari kelompok belajar dan tidak ada yang mau duduk dekat saya.',
+    isi: 'Saya dikucilkan dari kelompok belajar dan tdak ada yang mau duduk dekat saya.',
     tampilkanIdentitas: false,
     status: 'diproses',
     penerima: 'pengurus',

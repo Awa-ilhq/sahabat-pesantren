@@ -1,6 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as api from '../../api'
 import { reportKeys } from '../reports/queryKeys'
+
+const AI_SUMMARY_CACHE_MS = 10 * 60 * 1000
 
 const retryUnlessClientError = (count, error) =>
   error?.status >= 500 && count < 1
@@ -12,10 +14,34 @@ export const useSummary = () =>
     retry: retryUnlessClientError,
   })
 
-export const useAiSummary = ({ periode = 7, refresh = false } = {}) =>
-  useQuery({
-    queryKey: ['dashboard', 'ai-summary', periode, refresh],
-    queryFn: () => api.dashboard.getAiSummary({ periode, refresh }),
-    retry: retryUnlessClientError,
-    enabled: Boolean(api.dashboard?.getAiSummary),
+export const useAiSummary = ({ periode = 7 } = {}) => {
+  const queryClient = useQueryClient()
+  const queryKey = ['dashboard', 'ai-summary', periode]
+  const query = useQuery({
+    queryKey,
+    queryFn: () => api.dashboard.getAiSummary({ periode, refresh: false }),
+    retry: false,
+    enabled: false,
+    staleTime: AI_SUMMARY_CACHE_MS,
+    gcTime: AI_SUMMARY_CACHE_MS,
   })
+
+  const request = useMutation({
+    mutationFn: () =>
+      queryClient.fetchQuery({
+        queryKey,
+        queryFn: () => api.dashboard.getAiSummary({ periode, refresh: false }),
+        retry: false,
+        staleTime: AI_SUMMARY_CACHE_MS,
+        gcTime: AI_SUMMARY_CACHE_MS,
+      }),
+  })
+
+  return {
+    ...query,
+    requestSummary: request.mutate,
+    isRequesting: request.isPending,
+    requestError: request.error,
+    clearRequestError: request.reset,
+  }
+}

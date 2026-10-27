@@ -5,8 +5,11 @@ import {
   TrendingUp,
   UsersRound,
 } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import Button from '../../components/ui/Button'
 import ErrorState from '../../components/ui/ErrorState'
+import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
 import { useAiSummary, useSummary } from '../../features/dashboard/hooks'
 import { StatusBadge } from '../../features/reports/components/badges'
@@ -16,6 +19,7 @@ import {
   STATUSES,
 } from '../../lib/constants'
 import { cn } from '../../lib/cn'
+import { formatDateTime } from '../../lib/formatDate'
 
 function StatCard({ icon: Icon, label, value, tone = 'default', hint }) {
   return (
@@ -73,13 +77,18 @@ function Breakdown({ title, entries }) {
 }
 
 export default function DashboardPage() {
+  const [aiPeriod, setAiPeriod] = useState(7)
   const { data, isLoading, isError, refetch } = useSummary()
   const {
     data: aiData,
-    isLoading: aiLoading,
-    isError: aiError,
-    refetch: refetchAi,
-  } = useAiSummary({ periode: 7 })
+    isFetching: aiLoading,
+    requestSummary,
+    isRequesting,
+    requestError: aiError,
+    clearRequestError,
+  } = useAiSummary({ periode: aiPeriod })
+
+  const handleRequestSummary = () => requestSummary()
 
   if (isLoading) {
     return (
@@ -183,24 +192,51 @@ export default function DashboardPage() {
           ) : null}
         </div>
 
+        <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <Select
+            id="ai-summary-period"
+            label="Periode ringkasan"
+            value={aiPeriod}
+            disabled={isRequesting}
+            onChange={(event) => {
+              clearRequestError()
+              setAiPeriod(Number(event.target.value))
+            }}
+            options={[
+              { value: 7, label: '7 hari terakhir' },
+              { value: 30, label: '30 hari terakhir' },
+            ]}
+          />
+          <Button
+            loading={isRequesting}
+            onClick={handleRequestSummary}
+            className="w-full sm:w-auto"
+          >
+            {aiData ? 'Cek ringkasan' : 'Buat ringkasan'}
+          </Button>
+        </div>
+
+        <p className="mt-2 text-xs leading-5 text-body">
+          Ringkasan hanya diminta saat tombol ditekan. Hasil untuk periode yang
+          sama dipakai kembali dari cache hingga 10 menit; tombol ini tidak
+          memaksa AI membuat ulang.
+        </p>
+
         {aiLoading ? (
           <Skeleton className="mt-4 h-20 w-full" />
         ) : aiError ? (
-          <div className="mt-4 rounded-2xl border border-[#f1d5d5] bg-[#fff5f5] p-4 text-sm text-danger">
-            Ringkasan AI gagal dimuat.
-            <button
-              type="button"
-              onClick={() => refetchAi()}
-              className="ml-2 font-semibold text-danger underline underline-offset-2"
-            >
-              Coba lagi
-            </button>
+          <div role="alert" className="mt-4 rounded-2xl border border-[#f1d5d5] bg-[#fff5f5] p-4 text-sm text-danger">
+            Ringkasan AI gagal dimuat. Coba lagi nanti; permintaan tidak akan
+            diulang otomatis.
           </div>
         ) : aiData ? (
           <div className="mt-4 space-y-3">
-            <p className="text-sm leading-6 text-navy">
-              {aiData.ringkasan}
+            <p className="text-xs text-body">
+              Periode {aiData.periode_hari ?? aiPeriod} hari · dibuat{' '}
+              {formatDateTime(aiData.dibuat_pada)}
+              {aiData.dari_cache ? ' · dari cache server' : ''}
             </p>
+            <p className="text-sm leading-6 text-navy">{aiData.ringkasan}</p>
             {Array.isArray(aiData.poin) && aiData.poin.length ? (
               <ul className="list-disc space-y-1 pl-5 text-sm text-body">
                 {aiData.poin.map((item, index) => (
@@ -209,7 +245,12 @@ export default function DashboardPage() {
               </ul>
             ) : null}
           </div>
-        ) : null}
+        ) : (
+          <p className="mt-4 rounded-2xl bg-band-1 p-4 text-sm text-body">
+            Belum ada ringkasan untuk periode ini. Tekan “Buat ringkasan” saat
+            memang diperlukan.
+          </p>
+        )}
       </div>
 
       {kategoriEntries.length ? (
