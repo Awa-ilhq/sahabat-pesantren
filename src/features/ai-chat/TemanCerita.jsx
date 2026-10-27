@@ -463,8 +463,7 @@ export default function TemanCerita() {
             type="submit"
             size="icon"
             aria-label="Kirim pesan"
-            loading={chat.isPending}
-            disabled={!input.trim()}
+            disabled={!input.trim() || chat.isPending}
           >
             <Send aria-hidden="true" className="size-5" />
           </Button>

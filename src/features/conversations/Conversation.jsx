@@ -244,7 +244,12 @@ export function Conversation({ id, viewer }) {
             </p>
           ) : null}
         </div>
-        <Button type="submit" size="icon" loading={isSubmitting} aria-label="Kirim pesan">
+        <Button
+          type="submit"
+          size="icon"
+          disabled={isSubmitting}
+          aria-label="Kirim pesan"
+        >
           <Send aria-hidden="true" className="size-5" />
         </Button>
       </form>

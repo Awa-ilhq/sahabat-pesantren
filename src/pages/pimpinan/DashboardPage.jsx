@@ -208,7 +208,7 @@ export default function DashboardPage() {
             ]}
           />
           <Button
-            loading={isRequesting}
+            disabled={isRequesting}
             onClick={handleRequestSummary}
             className="w-full sm:w-auto"
           >
