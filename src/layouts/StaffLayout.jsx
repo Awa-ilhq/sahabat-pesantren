@@ -34,6 +34,12 @@ const NAV_ITEMS = [
     roles: ['pimpinan'],
   },
   {
+    to: '/pimpinan/audit',
+    label: 'Audit',
+    icon: History,
+    roles: ['pimpinan'],
+  },
+  {
     to: '/petugas/dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard,
