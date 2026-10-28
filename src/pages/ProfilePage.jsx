@@ -117,7 +117,7 @@ export default function ProfilePage() {
       <Card className={`${PROFILE_CARD_SURFACE} p-5 sm:p-6`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-navy">Data pengguna</h2>
-          {!editOpen ? (
+          {!editOpen && user?.role !== ROLES.SANTRI ? (
             <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
               <Pencil aria-hidden="true" className="size-4" />
               Edit profil
@@ -138,7 +138,7 @@ export default function ProfilePage() {
               </div>
             ))}
           </dl>
-        ) : (
+        ) : user?.role !== ROLES.SANTRI ? (
           <form onSubmit={handleSubmit(onSubmit)} className="mt-4 flex flex-col gap-4" noValidate>
             {formError ? (
               <p
@@ -156,23 +156,7 @@ export default function ProfilePage() {
               error={errors.name?.message}
               {...register('name')}
             />
-            {user?.role === ROLES.SANTRI ? (
-              <>
-                <Input
-                  id="profil-nis"
-                  label="NIS"
-                  value={user?.nis ?? user?.username ?? ''}
-                  disabled
-                  hint="NIS tidak dapat diubah."
-                />
-                <Input
-                  id="profil-phone"
-                  label="Telepon wali"
-                  error={errors.phone?.message}
-                  {...register('phone')}
-                />
-              </>
-            ) : (
+            {user?.role === ROLES.SANTRI ? null : (
               <Input
                 id="profil-email"
                 label="Email"
@@ -202,7 +186,7 @@ export default function ProfilePage() {
               </Button>
             </div>
           </form>
-        )}
+        ) : null}
       </Card>
 
       <Card className={`${PROFILE_CARD_SURFACE} p-5 sm:p-6`}>

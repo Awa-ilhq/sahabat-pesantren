@@ -18,6 +18,7 @@ import Pagination from '../../components/ui/Pagination'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
 import { useAuth } from '../../features/auth/auth-context'
+import { LateBadge } from '../../features/reports/components/badges'
 import { useMyReports } from '../../features/reports/hooks'
 import {
   CATEGORIES,
@@ -280,6 +281,12 @@ export default function MyReportsPage() {
                               {report.noLaporan}
                             </span>
                             <StatusPill status={report.status} />
+                            {report.terlambat === true || report.lewatBatas === true ? <LateBadge /> : null}
+                            {report.edited === true ? (
+                              <span className="rounded-full bg-[#edf0ed] px-2.5 py-1 text-[10px] font-bold text-[#536158]">
+                                Diedit
+                              </span>
+                            ) : null}
                             {hasIdentityRequest ? (
                               <Badge className="!border-0 !bg-[#0d352a] !px-2.5 !py-1 !text-[10px] !text-[#ffd166]">
                                 Ada permintaan untukmu

@@ -1,5 +1,6 @@
 import {
   ClipboardList,
+  Clock3,
   FileWarning,
   History,
   ShieldCheck,
@@ -25,6 +26,12 @@ const STATS = [
     key: 'laporanSensitif',
     label: 'Menyangkut pimpinan',
     icon: FileWarning,
+    tone: 'bg-report-coral text-danger',
+  },
+  {
+    key: 'jumlahTerlambat',
+    label: 'Laporan terlambat',
+    icon: Clock3,
     tone: 'bg-report-coral text-danger',
   },
   {
@@ -83,7 +90,7 @@ export default function PengawasDashboardPage() {
 
       <section
         aria-label="Ringkasan pengawasan"
-        className="grid grid-cols-2 gap-3"
+        className="grid grid-cols-2 gap-3 sm:grid-cols-3"
       >
         {STATS.map(({ key, label, icon: Icon, tone }) => (
           <Card key={key} className={`${SURFACE} p-4`}>
@@ -96,7 +103,7 @@ export default function PengawasDashboardPage() {
               <Icon aria-hidden="true" className="size-5" />
             </span>
             <p className="mt-2 text-3xl font-extrabold leading-none text-navy">
-              {data[key] ?? 0}
+              {data[key] ?? data.jumlahTerlambat ?? 0}
             </p>
             <p className="mt-1 text-xs font-semibold text-navy/80">{label}</p>
           </Card>

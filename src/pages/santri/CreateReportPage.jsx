@@ -94,7 +94,7 @@ function SuccessScreen({ report }) {
       <h1 className="mt-4 text-3xl">Laporanmu sudah terkirim</h1>
       <p className="mt-2 text-body">
         Terima kasih sudah berani bercerita. Laporanmu akan diperiksa petugas
-        dalam waktu 24 jam.
+        Laporanmu akan ditinjau dalam 24 jam.
       </p>
 
       <Card className={`${REPORT_CARD_SURFACE} mt-6 p-6`}>

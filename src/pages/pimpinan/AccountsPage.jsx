@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { useDeferredValue, useRef, useState } from 'react'
 import Button from '../../components/ui/Button'
-import ButtonLink from '../../components/ui/ButtonLink'
+
 import Card from '../../components/ui/Card'
 import ErrorState from '../../components/ui/ErrorState'
 import Input from '../../components/ui/Input'
@@ -318,25 +318,16 @@ function AccountsTab({ role }) {
       <Modal
         open={Boolean(pendingApproval)}
         onClose={() => setPendingApproval(null)}
-        title="Perlu persetujuan pimpinan lain"
+        title="Tidak dapat dinonaktifkan"
         footer={
-          <>
-            <Button variant="ghost" onClick={() => setPendingApproval(null)}>
-              Tutup
-            </Button>
-            <ButtonLink to="/pimpinan/pengajuan" onClick={() => setPendingApproval(null)}>
-              Lihat pengajuan
-            </ButtonLink>
-          </>
+          <Button variant="ghost" onClick={() => setPendingApproval(null)}>
+            Tutup
+          </Button>
         }
       >
         <p className="text-sm text-navy">
           {pendingApproval?.message ??
-            'Penonaktifan akun ini memerlukan persetujuan pimpinan lain.'}
-        </p>
-        <p className="text-sm text-body">
-          Pengajuan untuk {pendingApproval?.name ?? 'akun ini'} sudah dibuat dan
-          akan diproses melalui halaman Persetujuan.
+            'Penonaktifan akun pimpinan tidak tersedia.'}
         </p>
       </Modal>
     </div>

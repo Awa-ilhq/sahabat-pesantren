@@ -4,7 +4,6 @@ import {
   History,
   LayoutDashboard,
   ShieldAlert,
-  ShieldCheck,
   Users,
 } from 'lucide-react'
 import { useCallback } from 'react'
@@ -64,18 +63,6 @@ const NAV_ITEMS = [
     label: 'Audit',
     icon: History,
     roles: ['pengawas'],
-  },
-  {
-    to: '/pimpinan/audit',
-    label: 'Audit',
-    icon: History,
-    roles: ['pimpinan'],
-  },
-  {
-    to: '/pimpinan/pengajuan',
-    label: 'Persetujuan',
-    icon: ShieldCheck,
-    roles: ['pimpinan'],
   },
   {
     to: '/pimpinan/notifikasi',

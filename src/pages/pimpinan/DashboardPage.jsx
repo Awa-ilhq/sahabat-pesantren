@@ -1,6 +1,7 @@
 import {
   BarChart3,
   ClipboardList,
+  Clock3,
   Sparkles,
   TrendingUp,
   UsersRound,
@@ -135,7 +136,7 @@ export default function DashboardPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard
           icon={UsersRound}
           label="Total santri"
@@ -147,6 +148,13 @@ export default function DashboardPage() {
           label="Total laporan"
           value={data.totalLaporan}
           hint="Seluruh laporan yang tercatat."
+        />
+        <StatCard
+          icon={Clock3}
+          label="Laporan terlambat"
+          value={data.jumlahTerlambat ?? data.jumlah_terlambat ?? 0}
+          tone="danger"
+          hint="Laporan berstatus baru berusia ≥ 24 jam."
         />
       </div>
 
@@ -226,8 +234,7 @@ export default function DashboardPage() {
           <Skeleton className="mt-4 h-20 w-full" />
         ) : aiError ? (
           <div role="alert" className="mt-4 rounded-2xl border border-[#f1d5d5] bg-[#fff5f5] p-4 text-sm text-danger">
-            Ringkasan AI gagal dimuat. Coba lagi nanti; permintaan tidak akan
-            diulang otomatis.
+            Ringkasan AI gagal dimuat. Coba lagi.
           </div>
         ) : aiData ? (
           <div className="mt-4 space-y-3">

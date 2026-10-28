@@ -44,7 +44,7 @@ const STEPS = [
   {
     number: '03',
     title: 'Pantau',
-    text: 'Lihat status di Laporan Saya. Kalau belum ditangani dalam 24 jam, laporan naik ke pimpinan.',
+    text: 'Lihat status di Laporan Saya. Laporanmu akan ditinjau dalam 24 jam.',
   },
 ]
 
@@ -149,7 +149,7 @@ export default function HomePage() {
             </div>
             <div className="absolute right-0 top-10 z-20 rounded-2xl bg-white px-4 py-3 shadow-[0_12px_30px_rgba(18,55,42,0.12)] sm:right-2">
               <p className="text-xs font-medium text-body">Ditanggapi</p>
-              <p className="font-extrabold text-navy">dalam 24 jam</p>
+              <p className="font-extrabold text-navy">Laporanmu akan ditinjau dalam 24 jam</p>
             </div>
           </div>
         </div>
@@ -287,7 +287,7 @@ export default function HomePage() {
           </ol>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-sm font-semibold text-primary">
             <Check aria-hidden="true" className="size-5" />
-            Laporan belum ditangani dalam 24 jam akan diteruskan ke pimpinan.
+            Laporanmu akan ditinjau dalam 24 jam.
           </div>
         </div>
       </section>

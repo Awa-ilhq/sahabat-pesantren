@@ -15,6 +15,7 @@ import IdentityRequestSantri from '../../features/identity/IdentityRequestSantri
 import ReportTrail from '../../features/reports/components/ReportTrail'
 import {
   CategoryBadge,
+  LateBadge,
   StatusBadge,
 } from '../../features/reports/components/badges'
 import { notificationKeys } from '../../features/notifications/queryKeys'
@@ -122,7 +123,15 @@ export default function SantriReportDetailPage() {
           <span className="font-sans text-2xl font-semibold text-primary">
             {report.noLaporan}
           </span>
-          <StatusBadge status={report.status} />
+          <div className="flex flex-wrap items-center gap-2">
+            {report.terlambat === true || report.lewatBatas === true ? <LateBadge /> : null}
+            {report.edited === true ? (
+              <span className="rounded-full bg-[#edf0ed] px-2.5 py-1 text-[10px] font-bold text-[#536158]">
+                Diedit
+              </span>
+            ) : null}
+            <StatusBadge status={report.status} />
+          </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <CategoryBadge kategori={report.kategori} />

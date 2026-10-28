@@ -32,9 +32,6 @@ const StaffDashboardPage = lazy(
   () => import('../pages/staff/StaffDashboardPage'),
 )
 const AccountsPage = lazy(() => import('../pages/pimpinan/AccountsPage'))
-const DeactivationRequestsPage = lazy(
-  () => import('../pages/pimpinan/DeactivationRequestsPage'),
-)
 const PengawasDashboardPage = lazy(
   () => import('../pages/pengawas/PengawasDashboardPage'),
 )
@@ -130,7 +127,6 @@ export default function AppRouter() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="akun" element={<AccountsPage />} />
           <Route path="audit" element={<AuditLogPage />} />
-          <Route path="pengajuan" element={<DeactivationRequestsPage />} />
           <Route path="notifikasi" element={<NotifikasiPage />} />
           <Route path="profil" element={<ProfilePage />} />
         </Route>

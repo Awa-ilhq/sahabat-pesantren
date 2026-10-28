@@ -82,6 +82,10 @@ export const adaptReport = (raw) =>
       pelaporNama: raw.pelapor_nama ?? raw.user?.name ?? null,
       perluKlarifikasi: Boolean(raw.perlu_klarifikasi),
       statusChangedAt: raw.status_diubah ?? null,
+      terlambat: raw.terlambat === true,
+      lewatBatas: raw.lewat_batas === true || raw.terlambat === true,
+      edited: raw.diedit === true || raw.edited === true,
+      updatedAt: raw.diubah_pada ?? raw.updated_at ?? null,
       // Waktu baca per peran dipakai untuk menurunkan notifikasi saat
       // endpoint daftar notifikasi belum tersedia di backend.
       readAt: {
@@ -258,6 +262,7 @@ export const adaptSummary = (raw) => ({
     raw?.laporan_sensitif ?? raw?.laporan_menyangkut_pimpinan ?? 0,
   auditHariIni:
     raw?.audit_hari_ini ?? raw?.aktivitas_hari_ini ?? raw?.audit_today ?? 0,
+  jumlahTerlambat: Number(raw?.jumlah_terlambat ?? raw?.laporan_terlambat ?? 0),
   perStatus: raw?.laporan_per_status ?? raw?.per_status ?? {},
   perKategori: raw?.laporan_per_kategori ?? raw?.per_kategori ?? {},
 })

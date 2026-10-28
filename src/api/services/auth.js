@@ -4,23 +4,31 @@ import { adaptUser } from '../adapters'
 const unwrap = (response) => response.data.data ?? response.data
 
 export const login = async ({ identifier, password }) => {
-  const { data } = await http.post(
-    '/auth/login',
-    { identifier, password },
-    { skipSessionExpiry: true },
-  )
-  const result = data?.data ?? data
-  const token = result?.access_token ?? result?.token
-  const user = adaptUser(result?.user)
+  try {
+    const { data } = await http.post(
+      '/auth/login',
+      { identifier, password },
+      { skipSessionExpiry: true },
+    )
+    const result = data?.data ?? data
+    const token = result?.access_token ?? result?.token
+    const user = adaptUser(result?.user)
 
-  if (typeof token !== 'string' || !token || !user) {
-    throw new Error('Respons login dari server tidak valid.')
-  }
+    if (typeof token !== 'string' || !token || !user) {
+      throw new Error('Respons login dari server tidak valid.')
+    }
 
-  return {
-    token,
-    user,
-    message: result.message ?? data.message,
+    return {
+      token,
+      user,
+      message: result.message ?? data.message,
+    }
+  } catch (error) {
+    const message = error?.message || ''
+    if (message.toLowerCase().includes('nonaktif')) {
+      throw error
+    }
+    throw error
   }
 }
 

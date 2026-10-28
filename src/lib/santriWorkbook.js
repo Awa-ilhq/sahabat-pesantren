@@ -59,9 +59,8 @@ export const createSantriTemplateWorkbookBlob = async () => {
   const workbook = new ExcelJS.Workbook()
   const worksheet = workbook.addWorksheet('Data Santri')
   worksheet.addRow(TEMPLATE_HEADERS)
-  worksheet.addRow(TEMPLATE_HEADERS.map(() => ''))
   worksheet.views = [{ state: 'frozen', ySplit: 1 }]
-  worksheet.autoFilter = { from: 'A1', to: 'F2' }
+  worksheet.autoFilter = { from: 'A1', to: 'G1' }
   worksheet.getRow(1).font = { bold: true }
   worksheet.columns = TEMPLATE_HEADERS.map((header) => ({
     header,

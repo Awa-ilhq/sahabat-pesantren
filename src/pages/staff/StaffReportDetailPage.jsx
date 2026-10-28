@@ -23,17 +23,16 @@ import IdentityRequestStaff from '../../features/identity/IdentityRequestStaff'
 import { notificationKeys } from '../../features/notifications/queryKeys'
 import {
   CategoryBadge,
+  LateBadge,
   SensitiveBadge,
   StatusBadge,
 } from '../../features/reports/components/badges'
 import {
   useAddNote,
-  useEscalate,
   useReport,
   useUpdateStatus,
 } from '../../features/reports/hooks'
 import {
-  ESCALATION_TARGETS,
   ESCALATION_TARGET_LABELS,
   ROLES,
   STATUSES,
@@ -67,7 +66,6 @@ export default function StaffReportDetailPage() {
     refetch,
   } = useReport(id)
   const updateStatus = useUpdateStatus(id)
-  const escalate = useEscalate(id)
   const queryClient = useQueryClient()
   const toast = useToast()
   const { user } = useAuth()
@@ -79,8 +77,6 @@ export default function StaffReportDetailPage() {
   }, [dataUpdatedAt, queryClient])
 
   const [escalateOpen, setEscalateOpen] = useState(false)
-  const [tujuan, setTujuan] = useState('')
-  const [catatanEskalasi, setCatatanEskalasi] = useState('')
   const [noteBody, setNoteBody] = useState('')
 
   if (isLoading) {
@@ -137,22 +133,7 @@ export default function StaffReportDetailPage() {
     })
   }
 
-  const submitEscalate = async (event) => {
-    event.preventDefault()
-    if (!tujuan) {
-      toast.showToast('Pilih tujuan eskalasi dulu.', 'error')
-      return
-    }
-    try {
-      await escalate.mutateAsync({ tujuan, catatan: catatanEskalasi || null })
-      toast.showToast('Laporan diteruskan.', 'success')
-      setEscalateOpen(false)
-      setTujuan('')
-      setCatatanEskalasi('')
-    } catch (mutationError) {
-      toast.showToast(mutationError?.message ?? 'Gagal meneruskan laporan.', 'error')
-    }
-  }
+  // Fitur teruskan dinonaktifkan
 
   const submitNote = async (event) => {
     event.preventDefault()
@@ -181,7 +162,15 @@ export default function StaffReportDetailPage() {
           <span className="font-sans text-2xl font-semibold text-primary">
             {report.noLaporan}
           </span>
-          <StatusBadge status={report.status} />
+          <div className="flex flex-wrap items-center gap-2">
+            {report.terlambat === true || report.lewatBatas === true ? <LateBadge /> : null}
+            {report.edited === true ? (
+              <span className="rounded-full bg-[#edf0ed] px-2.5 py-1 text-[10px] font-bold text-[#536158]">
+                Diedit
+              </span>
+            ) : null}
+            <StatusBadge status={report.status} />
+          </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <CategoryBadge kategori={report.kategori} />
@@ -241,8 +230,8 @@ export default function StaffReportDetailPage() {
             <div className="flex items-end">
               <Button
                 variant="secondary"
-                onClick={() => setEscalateOpen(true)}
-                className="w-full"
+                disabled
+                className="w-full hidden"
               >
                 <Share2 aria-hidden="true" className="size-4" />
                 Teruskan (Eskalasi)
@@ -329,40 +318,11 @@ export default function StaffReportDetailPage() {
             <Button variant="ghost" onClick={() => setEscalateOpen(false)}>
               Batal
             </Button>
-            <Button
-              type="submit"
-              form="escalate-form"
-              loading={escalate.isPending}
-            >
-              Teruskan
-            </Button>
+            <Button disabled>Teruskan</Button>
           </>
         }
       >
-        <form id="escalate-form" onSubmit={submitEscalate} className="flex flex-col gap-4">
-          <p className="rounded-xl border border-primary/30 bg-[#edf6f0] p-3 text-xs text-[#163b2f]">
-            <strong>Kapan fitur ini digunakan?</strong> Gunakan bila laporan membutuhkan kewenangan lebih tinggi (seperti Pimpinan Pesantren) atau tindakan khusus di luar kewenangan pengurus saat ini. Status laporan dan riwayat eskalasi akan otomatis tercatat.
-          </p>
-          <Select
-            id="tujuan-eskalasi"
-            label="Tujuan eskalasi"
-            options={[
-              { value: '', label: 'Pilih tujuan' },
-              ...ESCALATION_TARGETS,
-            ]}
-            value={tujuan}
-            onChange={(event) => setTujuan(event.target.value)}
-          />
-          <Textarea
-            id="catatan-eskalasi"
-            label="Catatan (opsional)"
-            rows={3}
-            autoComplete="off"
-            placeholder="Ringkasan alasan penerusan…"
-            value={catatanEskalasi}
-            onChange={(event) => setCatatanEskalasi(event.target.value)}
-          />
-        </form>
+        <p className="text-sm text-body">Fitur ini tidak tersedia.</p>
       </Modal>
     </div>
   )

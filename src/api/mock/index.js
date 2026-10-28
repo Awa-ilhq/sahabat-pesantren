@@ -255,6 +255,10 @@ const toRawReport = (report, viewer) => {
     pelapor_nama: revealName(report, viewer) ? personName(report.ownerId) : null,
     permintaan_identitas: toRawRequest(report.permintaanIdentitas, viewer),
     perlu_klarifikasi: report.perluKlarifikasi,
+    terlambat: report.terlambat === true,
+    lewat_batas: report.terlambat === true,
+    diedit: report.edited === true,
+    diubah_pada: report.updatedAt ?? null,
     catatan_internal: isStaff
       ? report.notes.map((note) => ({
         id: note.id,
@@ -963,6 +967,7 @@ export const dashboard = {
       laporan_sensitif: reportStore.filter((item) => item.menyangkutPimpinan)
         .length,
       audit_hari_ini: 3,
+      jumlah_terlambat: reportStore.filter((item) => item.terlambat === true).length,
       laporan_per_status: countBy(reportStore, 'status'),
       laporan_per_kategori: countBy(reportStore, 'kategori'),
     })

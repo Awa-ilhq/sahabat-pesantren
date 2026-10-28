@@ -97,7 +97,6 @@ export function PublicLayout() {
           <div>
             <h2 className="text-base font-bold text-white">Bantuan</h2>
             <ul className="mt-4 space-y-2 text-sm text-white/75">
-              <li><a href="tel:129" className="hover:text-amber">SAPA 129</a></li>
               <li><Link to={destination} className="hover:text-amber">{actionLabel}</Link></li>
             </ul>
           </div>

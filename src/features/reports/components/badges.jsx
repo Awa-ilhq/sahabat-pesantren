@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   CheckCircle2,
   CircleDot,
   Hourglass,
@@ -22,6 +23,14 @@ export function StatusBadge({ status }) {
   return (
     <Badge tone={meta?.tone ?? 'neutral'} icon={STATUS_ICONS[status]}>
       {STATUS_LABELS[status] ?? status}
+    </Badge>
+  )
+}
+
+export function LateBadge() {
+  return (
+    <Badge tone="danger" icon={AlertTriangle}>
+      Terlambat
     </Badge>
   )
 }

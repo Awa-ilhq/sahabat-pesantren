@@ -17,6 +17,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { useAuth } from '../../features/auth/auth-context'
 import {
   CategoryBadge,
+  LateBadge,
   StatusBadge,
 } from '../../features/reports/components/badges'
 import { useStaffReports } from '../../features/reports/hooks'
@@ -83,11 +84,16 @@ function SummaryCard({ icon: Icon, label, value, tone }) {
 }
 
 function isOverdue(report) {
-  return report.status !== 'selesai' && dueState(report.batasKlarifikasi) === 'overdue'
+  if (report.status !== 'baru') return false
+  if (report.terlambat === true || report.lewatBatas === true) return true
+  return dueState(report.batasKlarifikasi) === 'overdue'
 }
 
 function dueDescription(report) {
   if (report.status === 'selesai') return 'Selesai'
+  if (report.status === 'baru' && (report.terlambat === true || report.lewatBatas === true)) {
+    return 'Lewat batas'
+  }
   const state = dueState(report.batasKlarifikasi)
   if (state === 'overdue') {
     const dueDate = parseDateOnly(report.batasKlarifikasi)
@@ -146,7 +152,7 @@ export default function StaffReportListPage() {
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE,
   )
-  const overdueCount = reports.filter(isOverdue).length
+  const overdueCount = reports.filter((report) => report.status === 'baru' && (report.terlambat === true || report.lewatBatas === true || isOverdue(report))).length
   const summaries = [
     reports.filter((report) => report.status === 'baru').length,
     reports.filter((report) => report.status === 'diproses').length,
@@ -288,13 +294,19 @@ export default function StaffReportListPage() {
                         <span className="font-sans text-base font-extrabold text-navy">
                           {report.noLaporan}
                         </span>
-                        {overdue ? (
+                        {report.terlambat === true || report.lewatBatas === true ? <LateBadge /> : null}
+                        {overdue || report.terlambat === true || report.lewatBatas === true ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-salmon px-2.5 py-1 text-[11px] font-bold text-white">
                             <AlertTriangle aria-hidden="true" className="size-3.5" />
                             Lewat batas
                           </span>
                         ) : null}
                         <StatusBadge status={report.status} />
+                        {report.edited === true ? (
+                          <span className="rounded-full bg-[#edf0ed] px-2.5 py-1 text-[10px] font-bold text-[#536158]">
+                            Diedit
+                          </span>
+                        ) : null}
                       </div>
                       <p
                         className="mt-2 line-clamp-2 text-sm text-navy"
