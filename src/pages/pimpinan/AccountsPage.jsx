@@ -403,12 +403,12 @@ function ImportTab() {
     }
   }
 
-  const downloadTemplate = async () => {
+
     try {
-      const blob = await createSantriTemplateWorkbookBlob()
-      downloadBlob(blob, 'template-import-santri.xlsx')
+
+
     } catch (error) {
-      toast.showToast(error?.message ?? 'Template gagal dibuat.', 'error')
+
     }
   }
 
@@ -433,11 +433,6 @@ function ImportTab() {
         </h2>
         <p className="mt-1 text-sm text-body">
           Unduh data santri saat ini untuk mengedit data, lalu gunakan tombol impor santri untuk mengunggah berkas Excel (.xlsx).
-
-
-
-
-
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button
@@ -445,7 +440,7 @@ function ImportTab() {
             size="sm"
 
           >
-            <Download aria-hidden="true" className="size-4" />
+
 
           </Button>
           <Button
@@ -454,6 +449,7 @@ function ImportTab() {
             loading={exportSantri.isPending}
             onClick={downloadCurrentData}
           >
+
             <Download aria-hidden="true" className="size-4" />
             Unduh data saat ini
           </Button>
@@ -566,7 +562,7 @@ function ImportTab() {
       ) : null}
     </div>
   )
-}
+
 
 export default function AccountsPage() {
   const [tab, setTab] = useState('pengurus')
