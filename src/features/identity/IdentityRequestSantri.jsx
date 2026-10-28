@@ -5,6 +5,7 @@ import Card from '../../components/ui/Card'
 import { useToast } from '../../components/ui/toast-context'
 import { IDENTITY_REQUEST_STATUS } from '../../lib/constants'
 import { formatDateOnly } from '../../lib/formatDate'
+import { isReportLocked } from '../reports/escalation'
 import {
   useAnswerIdentityRequest,
   useUpdateIdentity,
@@ -21,6 +22,7 @@ export default function IdentityRequestSantri({ report }) {
   const updateIdentity = useUpdateIdentity(report.id)
   const toast = useToast()
 
+  if (isReportLocked(report)) return null
   if (!request) return null
   const status = request.status
   const pending = status === 'menunggu'

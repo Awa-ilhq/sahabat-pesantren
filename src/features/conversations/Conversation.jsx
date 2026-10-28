@@ -43,7 +43,7 @@ const sortMessagesOldestFirst = (messages) =>
     })
     .map(({ message }) => message)
 
-export function Conversation({ id, viewer }) {
+export function Conversation({ id, viewer, locked = false }) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useMessages(id)
@@ -211,48 +211,54 @@ export function Conversation({ id, viewer }) {
         )}
       </div>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mt-4 flex items-end gap-2"
-        autoComplete="off"
-        noValidate
-      >
-        <div className="flex-1">
-          <label htmlFor="message-body" className="sr-only">
-            Pesan
-          </label>
-          <textarea
-            id="message-body"
-            rows={2}
-            autoComplete="off"
-            placeholder="Tulis pesan…"
-            className={cn(
-              'w-full rounded-2xl border bg-white px-4 py-3 text-navy placeholder:text-body/60 focus:border-primary focus:outline-none focus:ring-3 focus:ring-primary/30',
-              errors.body ? 'border-danger' : 'border-border',
-            )}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault()
-                event.currentTarget.form?.requestSubmit()
-              }
-            }}
-            {...register('body')}
-          />
-          {errors.body ? (
-            <p role="alert" className="mt-1 text-sm text-danger">
-              {errors.body.message}
-            </p>
-          ) : null}
-        </div>
-        <Button
-          type="submit"
-          size="icon"
-          disabled={isSubmitting}
-          aria-label="Kirim pesan"
+      {locked ? (
+        <p className="mt-4 rounded-xl bg-band-1 px-4 py-3 text-sm text-body">
+          Laporan terkunci. Pesan baru tidak dapat dikirim.
+        </p>
+      ) : (
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="mt-4 flex items-end gap-2"
+          autoComplete="off"
+          noValidate
         >
-          <Send aria-hidden="true" className="size-5" />
-        </Button>
-      </form>
+          <div className="flex-1">
+            <label htmlFor="message-body" className="sr-only">
+              Pesan
+            </label>
+            <textarea
+              id="message-body"
+              rows={2}
+              autoComplete="off"
+              placeholder="Tulis pesan…"
+              className={cn(
+                'w-full rounded-2xl border bg-white px-4 py-3 text-navy placeholder:text-body/60 focus:border-primary focus:outline-none focus:ring-3 focus:ring-primary/30',
+                errors.body ? 'border-danger' : 'border-border',
+              )}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault()
+                  event.currentTarget.form?.requestSubmit()
+                }
+              }}
+              {...register('body')}
+            />
+            {errors.body ? (
+              <p role="alert" className="mt-1 text-sm text-danger">
+                {errors.body.message}
+              </p>
+            ) : null}
+          </div>
+          <Button
+            type="submit"
+            size="icon"
+            disabled={isSubmitting || sendMessage.isPending}
+            aria-label="Kirim pesan"
+          >
+            <Send aria-hidden="true" className="size-5" />
+          </Button>
+        </form>
+      )}
     </Card>
   )
 }

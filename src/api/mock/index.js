@@ -88,6 +88,12 @@ const accessibleReport = (user, id) => {
   return report
 }
 
+const assertUnlocked = (report) => {
+  if (report.isLocked || report.status === 'DITERUSKAN_KE_BERWAJIB') {
+    fail(409, 'Laporan terkunci karena sudah diteruskan ke pihak berwajib.')
+  }
+}
+
 // Snapshot baca hanya hidup di memori modul, sama seperti data mock lain.
 const readSnapshots = new Map()
 const readKey = (userId, reportId) => `${userId}:${reportId}`
@@ -251,6 +257,9 @@ const toRawReport = (report, viewer) => {
     dieskalasi_tujuan: report.escalated?.tujuan ?? null,
     dieskalasi_catatan: report.escalated?.catatan ?? null,
     dieskalasi_at: report.escalated?.at ?? null,
+    is_locked:
+      report.isLocked === true ||
+      report.status === 'DITERUSKAN_KE_BERWAJIB',
     waktu: report.createdAt,
     pelapor_nama: revealName(report, viewer) ? personName(report.ownerId) : null,
     permintaan_identitas: toRawRequest(report.permintaanIdentitas, viewer),
@@ -386,6 +395,7 @@ export const reports = {
     await delay()
     const user = requireUser()
     const report = accessibleReport(user, id)
+    assertUnlocked(report)
     if (user.role === 'santri' && report.status !== 'baru') {
       fail(403, 'Laporan yang sudah diproses tidak dapat dihapus.')
     }
@@ -529,6 +539,7 @@ export const reports = {
     await delay()
     const user = requireUser()
     const report = accessibleReport(user, id)
+    assertUnlocked(report)
     if (user.role !== 'santri') {
       fail(403, 'Hanya pelapor yang dapat mengubah ini.')
     }
@@ -553,6 +564,7 @@ export const reports = {
     const user = requireUser()
     requireRole(user, ['pimpinan'])
     const report = accessibleReport(user, id)
+    assertUnlocked(report)
     const current = report.permintaanIdentitas?.status
     if (current === 'menunggu') {
       fail(409, 'Permintaan untuk laporan ini masih menunggu jawaban santri.')
@@ -593,6 +605,7 @@ export const reports = {
     const user = requireUser()
     requireRole(user, ['santri'])
     const report = accessibleReport(user, id)
+    assertUnlocked(report)
     const request = report.permintaanIdentitas
     if (!request) fail(404, 'Tidak ada permintaan untuk laporan ini.')
     const identityStatus =
@@ -615,6 +628,7 @@ export const reports = {
     const user = requireUser()
     requireRole(user, ['pengurus', 'pimpinan'])
     const report = accessibleReport(user, id)
+    assertUnlocked(report)
     if (!['baru', 'diproses', 'selesai'].includes(status)) {
       fail(422, 'Status tidak dikenal.', { status: ['Status tidak dikenal.'] })
     }
@@ -625,17 +639,54 @@ export const reports = {
     return adaptReport(toRawReport(report, user))
   },
 
-  async escalate(id, { tujuan, catatan }) {
+  async escalate(id, payload = {}) {
     await delay()
     const user = requireUser()
-    requireRole(user, ['pengurus', 'pimpinan'])
+    requireRole(user, ['pengurus'])
     const report = accessibleReport(user, id)
-    if (!tujuan) {
-      fail(422, 'Pilih tujuan eskalasi.', { tujuan: ['Pilih tujuan eskalasi.'] })
+    assertUnlocked(report)
+    const tujuan = payload.tujuan
+    const phone = String(payload.nomor_wa_tujuan ?? '').trim()
+    const catatan = String(payload.catatan_pengurus ?? '').trim()
+    const errors = {}
+    if (!['polsek', 'uppt_ppa', 'pengurus_pusat'].includes(tujuan)) {
+      errors.tujuan = ['Pilih tujuan eskalasi yang valid.']
     }
-    report.escalated = { tujuan, catatan: catatan ?? null, at: offsetDate(0) }
+    if (!/^\+\d{8,15}$/.test(phone)) {
+      errors.nomor_wa_tujuan = [
+        'Gunakan format internasional, contoh +6281234567890.',
+      ]
+    }
+    if (!catatan) {
+      errors.catatan_pengurus = ['Catatan pengurus wajib diisi.']
+    }
+    if (Object.keys(errors).length) {
+      fail(422, 'Periksa kembali isian eskalasi.', errors)
+    }
+    report.escalated = { tujuan, catatan, at: offsetDate(0) }
+    report.status = 'DITERUSKAN_KE_BERWAJIB'
+    report.isLocked = true
     markReportRead(user, report)
-    return adaptReport(toRawReport(report, user))
+    return {
+      success: true,
+      message: 'Laporan berhasil dieskalasi dan dikunci.',
+      whatsapp_url: `https://wa.me/${phone.slice(1)}`,
+      pdf_download_url: `/petugas/laporan/${id}/eskalasi/pdf`,
+      laporan: adaptReport(toRawReport(report, user)),
+    }
+  },
+
+  async downloadEscalationPdf(id) {
+    await delay()
+    const user = requireUser()
+    requireRole(user, ['pengurus'])
+    const report = accessibleReport(user, id)
+    if (!report.isLocked && report.status !== 'DITERUSKAN_KE_BERWAJIB') {
+      fail(404, 'PDF surat pengantar belum tersedia.')
+    }
+    return new Blob(['%PDF-1.4\n% Mock surat pengantar\n%%EOF'], {
+      type: 'application/pdf',
+    })
   },
 }
 
@@ -652,6 +703,7 @@ export const messages = {
     await delay()
     const user = requireUser()
     const report = accessibleReport(user, id)
+    assertUnlocked(report)
     const text = String(body ?? '').trim()
     if (!text) {
       fail(422, 'Pesan tidak boleh kosong.', { isi: ['Pesan tidak boleh kosong.'] })
@@ -779,6 +831,7 @@ export const notes = {
     const user = requireUser()
     requireRole(user, ['pengurus', 'pimpinan'])
     const report = accessibleReport(user, id)
+    assertUnlocked(report)
     const text = String(body ?? '').trim()
     if (!text) {
       fail(422, 'Catatan tidak boleh kosong.', {

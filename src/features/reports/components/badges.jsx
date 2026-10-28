@@ -16,6 +16,7 @@ const STATUS_ICONS = {
   baru: CircleDot,
   diproses: Hourglass,
   selesai: CheckCircle2,
+  DITERUSKAN_KE_BERWAJIB: AlertTriangle,
 }
 
 export function StatusBadge({ status }) {

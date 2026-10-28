@@ -106,8 +106,26 @@ export const useEscalate = (id) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload) => api.reports.escalate(id, payload),
-    onSuccess: (report) => {
-      queryClient.setQueryData(reportKeys.detail(id), report)
+    onSuccess: (result, payload) => {
+      const report = result?.laporan
+      if (report) {
+        queryClient.setQueryData(reportKeys.detail(id), report)
+      } else {
+        queryClient.setQueryData(reportKeys.detail(id), (current) =>
+          current
+            ? {
+                ...current,
+                status: 'DITERUSKAN_KE_BERWAJIB',
+                isLocked: true,
+                dieskalasiTujuan: payload.tujuan,
+                dieskalasiCatatan: payload.catatan_pengurus,
+                dieskalasiAt: new Date().toISOString(),
+              }
+            : current,
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
     },
   })

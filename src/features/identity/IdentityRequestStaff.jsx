@@ -12,6 +12,7 @@ import {
   IDENTITY_REQUEST_STATUS,
 } from '../../lib/constants'
 import { formatDateOnly } from '../../lib/formatDate'
+import { isReportLocked } from '../reports/escalation'
 import { useRequestIdentity } from '../reports/hooks'
 
 const PROOF_TYPES = IDENTITY_PROOF_ACCEPT.split(',')
@@ -47,6 +48,7 @@ export default function IdentityRequestStaff({ report }) {
   const [bukti, setBukti] = useState(null)
   const [errors, setErrors] = useState({})
 
+  if (isReportLocked(report)) return null
   const status = request?.status
   const identityApproved =
     status === 'disetujui' || status === true || status === 1 || status === '1'

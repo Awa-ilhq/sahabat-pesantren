@@ -78,6 +78,7 @@ export const adaptReport = (raw) =>
       dieskalasiTujuan: raw.dieskalasi_tujuan ?? null,
       dieskalasiCatatan: raw.dieskalasi_catatan ?? null,
       dieskalasiAt: raw.dieskalasi_at ?? null,
+      isLocked: Boolean(raw.is_locked ?? raw.isLocked ?? raw.terkunci ?? raw.locked),
       createdAt: raw.waktu ?? raw.created_at ?? null,
       pelaporNama: raw.pelapor_nama ?? raw.user?.name ?? null,
       perluKlarifikasi: Boolean(raw.perlu_klarifikasi),

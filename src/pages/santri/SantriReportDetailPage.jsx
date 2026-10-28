@@ -25,6 +25,7 @@ import {
   useUpdateIdentity,
 } from '../../features/reports/hooks'
 import { formatDateOnly } from '../../lib/formatDate'
+import { isReportLocked } from '../../features/reports/escalation'
 
 const DETAIL_CARD_SURFACE =
   '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
@@ -89,6 +90,10 @@ export default function SantriReportDetailPage() {
   }
 
   const toggleIdentity = (next) => {
+    if (isReportLocked(report)) {
+      toast.showToast('Laporan terkunci dan tidak dapat diubah.', 'error')
+      return
+    }
     updateIdentity.mutate(next, {
       onError: (mutationError) =>
         toast.showToast(
@@ -99,6 +104,11 @@ export default function SantriReportDetailPage() {
   }
 
   const handleDelete = async () => {
+    if (isReportLocked(report)) {
+      toast.showToast('Laporan terkunci dan tidak dapat dihapus.', 'error')
+      setDeleteOpen(false)
+      return
+    }
     try {
       await deleteReport.mutateAsync(id)
       toast.showToast('Laporan berhasil dihapus.', 'success')
@@ -107,6 +117,8 @@ export default function SantriReportDetailPage() {
       toast.showToast(err?.message ?? 'Gagal menghapus laporan.', 'error')
     }
   }
+
+  const isLocked = isReportLocked(report)
 
   return (
     <div className="flex flex-col gap-5">
@@ -131,6 +143,11 @@ export default function SantriReportDetailPage() {
               </span>
             ) : null}
             <StatusBadge status={report.status} />
+            {isLocked ? (
+              <span className="rounded-full bg-[#fbe9e7] px-2.5 py-1 text-[10px] font-bold text-danger">
+                Terkunci
+              </span>
+            ) : null}
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -148,34 +165,38 @@ export default function SantriReportDetailPage() {
         </p>
       </Card>
 
-      <IdentityRequestSantri report={report} />
+      {!isLocked ? <IdentityRequestSantri report={report} /> : null}
 
-      <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
-        <Switch
-          id="identity-toggle"
-          label="Tampilkan namaku ke petugas"
-          description={
-            report.tampilkanIdentitas
-              ? 'Pengurus dan pimpinan dapat melihat namamu sesuai pilihanmu.'
-              : 'Pengurus dan pimpinan tidak dapat melihat namamu selama pilihan ini mati.'
-          }
-          checked={report.tampilkanIdentitas}
-          disabled={updateIdentity.isPending}
-          onChange={toggleIdentity}
-        />
-      </Card>
+      {!isLocked ? (
+        <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
+          <Switch
+            id="identity-toggle"
+            label="Tampilkan namaku ke petugas"
+            description={
+              report.tampilkanIdentitas
+                ? 'Pengurus dan pimpinan dapat melihat namamu sesuai pilihanmu.'
+                : 'Pengurus dan pimpinan tidak dapat melihat namamu selama pilihan ini mati.'
+            }
+            checked={report.tampilkanIdentitas}
+            disabled={updateIdentity.isPending}
+            onChange={toggleIdentity}
+          />
+        </Card>
+      ) : null}
 
       <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold text-[#163b2f]">Pengelolaan Laporan</h2>
             <p className="mt-0.5 text-xs text-body">
-              {report.status === 'baru'
+              {isLocked
+                ? 'Laporan ini terkunci setelah diteruskan ke pihak berwajib dan tidak dapat diubah atau dihapus.'
+                : report.status === 'baru'
                 ? 'Laporan ini masih baru dan belum diproses. Kamu masih bisa menghapusnya bila diperlukan.'
                 : 'Laporan ini sudah diproses atau selesai sehingga tidak dapat dihapus demi keamanan dan riwayat penanganan.'}
             </p>
           </div>
-          {report.status === 'baru' ? (
+          {report.status === 'baru' && !isLocked ? (
             <Button
               variant="secondary"
               size="sm"
@@ -195,10 +216,10 @@ export default function SantriReportDetailPage() {
 
       <ReportTrail id={id} createdAt={report.createdAt} />
 
-      <Conversation id={id} viewer="santri" />
+      <Conversation id={id} viewer="santri" locked={isLocked} />
 
       <Modal
-        open={deleteOpen}
+        open={deleteOpen && !isLocked}
         onClose={() => setDeleteOpen(false)}
         title="Hapus Laporan Ini?"
         footer={

@@ -114,9 +114,12 @@ export default function DashboardPage() {
     )
   }
 
-  const statusEntries = STATUSES.map((status) => ({
+  const perStatus = data.perStatus || data.laporan_per_status || {}
+  const statusEntries = STATUSES.filter((status) =>
+    ['baru', 'diproses', 'selesai'].includes(status.value),
+  ).map((status) => ({
     value: status.value,
-    count: data.perStatus[status.value] ?? 0,
+    count: perStatus[status.value] ?? 0,
   }))
 
   const kategoriEntries = CATEGORIES.map((category) => [

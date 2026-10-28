@@ -56,6 +56,7 @@ export const STATUSES = [
   { value: 'baru', label: 'Baru', tone: 'new' },
   { value: 'diproses', label: 'Diproses', tone: 'process' },
   { value: 'selesai', label: 'Selesai', tone: 'done' },
+  { value: 'DITERUSKAN_KE_BERWAJIB', label: 'Diteruskan ke pihak berwajib', tone: 'danger' },
 ]
 
 export const STATUS_LABELS = Object.fromEntries(

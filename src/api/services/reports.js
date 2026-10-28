@@ -4,6 +4,7 @@ import { ROLES } from '../../lib/constants'
 import { identityVisible } from '../../lib/displayReporter'
 import { getSession } from '../../lib/session'
 import { ApiError } from '../errors'
+import { API_URL } from '../../lib/env'
 
 const unwrap = (response) => response.data.data
 
@@ -177,20 +178,44 @@ export const updateStatus = async (id, status) =>
     ),
   )
 
-export const escalate = async (id, { tujuan, catatan }) =>
-  sanitizeReport(
-    adaptReport(
-      unwrapReport(
-        await http.post(`/reports/${id}/escalate`, {
-          tujuan,
-          catatan: catatan ?? null,
-        }),
-      ),
-    ),
-  )
+export const escalate = async (id, payload = {}) => {
+  const body = {
+    tujuan: payload.tujuan,
+    nomor_wa_tujuan: payload.nomor_wa_tujuan ?? payload.nomorWaTujuan,
+    catatan_pengurus:
+      payload.catatan_pengurus ??
+      payload.catatanPengurus ??
+      payload.catatan ??
+      null,
+  }
+  const response = await http.post(`/petugas/laporan/${id}/eskalasi`, body)
+  const data = response.data?.data ?? response.data
+  if (data?.laporan) {
+    data.laporan = sanitizeReport(adaptReport(data.laporan))
+  }
+  return data
+}
 
-// Pimpinan meminta izin melihat nama pelapor. Bukti (opsional) dikirim
-// sebagai berkas; jangan set Content-Type manual agar boundary terisi.
+export const escalateReport = escalate
+
+export const downloadEscalationPdf = async (id, downloadUrl) => {
+  let url = downloadUrl
+  if (typeof url === 'string' && !/^https?:\/\//i.test(url)) {
+    if (url.startsWith('/api/')) {
+      url = API_URL ? `${API_URL}${url}` : url.slice(4)
+    } else if (!url.startsWith('/')) {
+      url = `/${url}`
+    }
+  }
+  const response = await http.get(
+    url || `/petugas/laporan/${id}/eskalasi/pdf`,
+    {
+    responseType: 'blob',
+    },
+  )
+  return response.data
+}
+
 export const requestIdentity = async (id, { alasan, bukti }) => {
   const form = new FormData()
   form.append('alasan', alasan)
