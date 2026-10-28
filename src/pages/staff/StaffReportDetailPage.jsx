@@ -245,7 +245,7 @@ export default function StaffReportDetailPage() {
                 className="w-full"
               >
                 <Share2 aria-hidden="true" className="size-4" />
-                Teruskan laporan
+                Teruskan (Eskalasi)
               </Button>
             </div>
           </div>
@@ -340,6 +340,9 @@ export default function StaffReportDetailPage() {
         }
       >
         <form id="escalate-form" onSubmit={submitEscalate} className="flex flex-col gap-4">
+          <p className="rounded-xl border border-primary/30 bg-[#edf6f0] p-3 text-xs text-[#163b2f]">
+            <strong>Kapan fitur ini digunakan?</strong> Gunakan bila laporan membutuhkan kewenangan lebih tinggi (seperti Pimpinan Pesantren) atau tindakan khusus di luar kewenangan pengurus saat ini. Status laporan dan riwayat eskalasi akan otomatis tercatat.
+          </p>
           <Select
             id="tujuan-eskalasi"
             label="Tujuan eskalasi"

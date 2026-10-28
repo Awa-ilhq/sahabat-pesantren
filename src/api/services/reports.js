@@ -81,6 +81,11 @@ const assertCanView = (report, role, userId) => {
   }
 }
 
+export const deleteReport = async (id) => {
+  const response = await http.delete(`/reports/${id}`)
+  return response.data
+}
+
 export const createReport = async (payload) =>
   sanitizeReport(adaptReport(unwrapReport(await http.post('/reports', payload))))
 

@@ -59,12 +59,46 @@ const sendChat = async ({ message, history }) => {
 export const chat = async ({ message, history = [] }) =>
   adaptAiReply(unwrap(await sendChat({ message, history })))
 
-// Backend belum menyediakan endpoint draf, jadi draf dibuat dari riwayat
-// percakapan yang sudah ada di klien.
+// Endpoint ringkasan / draf laporan dari AI.
+// Mencoba endpoint backend POST /reports/summarize bila tersedia,
+// dengan fallback terstruktur dari riwayat percakapan.
 export const createDraft = async ({ conversationId, messages } = {}) => {
-  if (Array.isArray(messages) && messages.length) {
+  const stories = (Array.isArray(messages) ? messages : [])
+    .filter((item) => item.role === 'user' && item.body?.trim())
+    .map((item) => item.body.trim())
+
+  if (stories.length) {
+    try {
+      const response = await http.post(
+        '/reports/summarize',
+        {
+          cerita: stories.join('\n\n'),
+          isi: stories.join('\n\n'),
+          history: buildHistory(messages, historyRole),
+          conversation_id: conversationId ?? null,
+        },
+        { timeout: AI_TIMEOUT_MS },
+      )
+      const data = unwrap(response)
+      const isi =
+        data?.isi ??
+        data?.ringkasan ??
+        data?.summary ??
+        (typeof data === 'string' ? data : null)
+      if (isi) {
+        return adaptAiDraft({
+          kategori: data?.kategori,
+          isi,
+          tampilkanIdentitas: false,
+        })
+      }
+    } catch {
+      // Backend /reports/summarize belum aktif / offline, fallback ke perapian format lokal
+    }
+
     return adaptAiDraft(draftFromAiMessages(messages))
   }
+
   if (!conversationId) {
     return adaptAiDraft({})
   }

@@ -94,6 +94,10 @@ function AccountsTab({ role }) {
   }
 
   const toggleActive = (account) => {
+    if (account.role === ROLES.PIMPINAN) {
+      toast.showToast('Akun pimpinan tidak dapat dinonaktifkan.', 'error')
+      return
+    }
     setActive.mutate(
       { id: account.id, active: !account.active },
       {
@@ -200,7 +204,12 @@ function AccountsTab({ role }) {
                     )}
                     {account.active ? 'Aktif' : 'Nonaktif'}
                   </span>
-                  <Button
+                  {account.role === ROLES.PIMPINAN ? (
+                    <span className="rounded-full bg-band-1 px-3 py-1 text-xs font-semibold text-body">
+                      Akun Utama
+                    </span>
+                  ) : (
+                    <Button
                     variant="secondary"
                     size="sm"
                     loading={setActive.isPending}
@@ -208,6 +217,7 @@ function AccountsTab({ role }) {
                   >
                     {account.active ? 'Nonaktifkan' : 'Aktifkan'}
                   </Button>
+                  )}
                 </div>
               </Card>
             </li>
@@ -422,21 +432,21 @@ function ImportTab() {
           Langkah 1 — Siapkan berkas
         </h2>
         <p className="mt-1 text-sm text-body">
-          Template sederhana berisi nama, email, NIS, jenis kelamin, telepon
-          wali, dan password. NIS digunakan untuk memperbarui data yang sudah
-          ada atau membuat akun baru; jangan ubah NIS jika ingin memperbarui
-          akun yang sama. Untuk akun lama, password boleh dikosongkan agar
-          tetap memakai password sebelumnya. Akun baru ada sandi default yaitu 
-          <b> 12345678</b>
+          Unduh data santri saat ini untuk mengedit data, lalu gunakan tombol impor santri untuk mengunggah berkas Excel (.xlsx).
+
+
+
+
+
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button
             variant="secondary"
             size="sm"
-            onClick={downloadTemplate}
+
           >
             <Download aria-hidden="true" className="size-4" />
-            Unduh template
+
           </Button>
           <Button
             variant="secondary"

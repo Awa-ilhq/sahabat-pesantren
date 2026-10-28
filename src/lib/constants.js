@@ -64,7 +64,7 @@ export const STATUS_LABELS = Object.fromEntries(
 
 export const ESCALATION_TARGETS = [
   { value: 'pimpinan', label: 'Pimpinan pesantren' },
-  { value: 'sapa_129', label: 'Layanan SAPA 129' },
+  { value: 'tim_konseling', label: 'Tim Konseling / Medis' },
   { value: 'kepolisian', label: 'Kepolisian' },
   { value: 'dinas_p3a', label: 'Dinas P3A / PPPA' },
   { value: 'lainnya', label: 'Lainnya' },

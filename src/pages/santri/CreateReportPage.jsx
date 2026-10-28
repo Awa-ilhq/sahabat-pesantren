@@ -215,12 +215,12 @@ export default function CreateReportPage() {
           <div>
             <h2 className="text-sm font-bold text-[#163b2f]">Butuh bantuan segera?</h2>
             <p className="mt-0.5 text-xs leading-5 text-[#6f746f]">
-              Jika kamu sedang dalam bahaya, segera hubungi pengurus atau ustaz
-              terdekat. Kamu juga dapat menghubungi SAPA 129 melalui{' '}
-              <a href="tel:129" className="font-semibold text-[#163b2f] underline underline-offset-2">
-                telepon 129
-              </a>
-              .
+              Jika kamu sedang dalam bahaya, segera hubungi pengurus, ustaz, atau pihak keamanan pesantren terdekat.
+
+
+
+
+
             </p>
           </div>
         </div>

@@ -21,7 +21,7 @@ const QUESTIONS = [
   {
     question: 'Aku sedang dalam bahaya sekarang. Bagaimana?',
     answer:
-      'Segera temui pengurus atau ustaz yang kamu percaya. Jika membutuhkan bantuan, hubungi SAPA 129 atau orang dewasa terdekat.',
+      'Segera temui pengurus, ustaz, atau orang dewasa yang kamu percaya di pesantren untuk mendapatkan bantuan langsung.',
   },
   {
     question: 'Kenapa harus keluar setelah selesai?',

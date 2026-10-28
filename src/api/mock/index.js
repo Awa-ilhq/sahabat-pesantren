@@ -145,7 +145,7 @@ const AI_REPORT_PATTERN = /(lapor|laporkan|draft|draf)/i
 const AI_REPLY_PACKS = {
   crisis: {
     bodies: [
-      'Terima kasih sudah berani cerita. Keadaan ini terdengar berat, dan keselamatanmu yang paling penting. Tolong segera hubungi pengurus, ustaz, atau orang dewasa yang kamu percaya; kalau kamu dalam bahaya sekarang, hubungi SAPA 129 atau layanan darurat.',
+      'Terima kasih sudah berani cerita. Keadaan ini terdengar berat, dan keselamatanmu yang paling penting. Tolong segera temui pengurus, ustaz, atau orang dewasa yang kamu percaya di pesantren untuk mendapatkan bantuan langsung.',
     ],
     suggestions: ['Aku mau bicara ke pengurus', 'Aku mau buat laporan'],
   },
@@ -338,6 +338,19 @@ export const auth = {
 }
 
 export const reports = {
+  async deleteReport(id) {
+    await delay()
+    const user = requireUser()
+    const report = accessibleReport(user, id)
+    if (user.role === 'santri' && report.status !== 'baru') {
+      fail(403, 'Laporan yang sudah diproses tidak dapat dihapus.')
+    }
+    const idx = reportStore.findIndex((item) => String(item.id) === String(id))
+    if (idx !== -1) {
+      reportStore.splice(idx, 1)
+    }
+    return { ok: true, message: 'Laporan berhasil dihapus.' }
+  },
   async createReport(payload) {
     await delay()
     const user = requireUser()
@@ -707,7 +720,10 @@ export const ai = {
 
     return {
       kategori: aiCategoryFor(stories.join(' ')),
-      isi: `Aku ingin melaporkan hal ini.\n\n${stories.join('\n\n')}`,
+      isi:
+        stories.length === 1
+          ? `Berikut kronologi yang saya alami:\n\n${stories[0]}\n\nMohon ditindaklanjuti oleh pihak pesantren.`
+          : `Berikut ringkasan kejadian yang saya alami:\n\n${stories.map((s, idx) => `${idx + 1}. ${s}`).join('\n\n')}\n\nMohon ditindaklanjuti oleh pihak pesantren.`,
       tampilkanIdentitas: false,
     }
   },

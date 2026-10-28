@@ -299,7 +299,7 @@ export default function MyReportsPage() {
                               {CATEGORY_LABELS[report.kategori] ?? report.kategori}
                             </span>
                             <span className="text-[10px] text-[#718078]">
-                              Dibuat {formatDateOnly(report.createdAt)}
+                              Dibuat {formatDateOnly(report.createdAt)} {report.status === 'baru' ? '· Respon maks. 24 jam' : ''}
                             </span>
                           </div>
                         </div>

@@ -33,9 +33,17 @@ export const draftFromAiMessages = (messages = []) => {
   const stories = messages
     .filter((item) => item.role === 'user' && item.body?.trim())
     .map((item) => item.body.trim())
-  const isi = stories.length
-    ? `Aku ingin melaporkan hal ini.\n\n${stories.join('\n\n')}`
-    : ''
+
+  let isi = ''
+  if (stories.length === 1) {
+    isi = `Berikut adalah kronologi / kejadian yang saya alami:\n\n${stories[0]}\n\nMohon untuk ditindaklanjuti oleh pihak pesantren.`
+  } else if (stories.length > 1) {
+    const formattedPoints = stories
+      .map((story, index) => `${index + 1}. ${story}`)
+      .join('\n\n')
+    isi = `Berikut adalah ringkasan kronologi kejadian yang saya alami:\n\n${formattedPoints}\n\nMohon untuk ditindaklanjuti oleh pihak pengurus atau pimpinan pesantren.`
+  }
+
   return {
     kategori: categoryForStory(stories.join(' ')),
     isi,

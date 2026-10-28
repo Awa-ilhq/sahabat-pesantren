@@ -49,11 +49,16 @@ const readChatState = (userId) => {
     const messages = parsed.messages
       .filter((message) => message && typeof message.body === 'string')
       .map((message, index) => ({
-        id: `ai-restored-${index}`,
+        id: message.id ?? (index === 0 && message.body === GREETING ? 'ai-greeting' : `ai-restored-${index}`),
         role: message.role === 'user' ? 'user' : 'assistant',
         body: message.body,
       }))
-    if (!messages.some((message) => message.id === 'ai-greeting')) {
+    const hasGreeting =
+      messages.length > 0 &&
+      (messages[0].id === 'ai-greeting' ||
+        messages[0].body === GREETING ||
+        messages.some((m) => m.id === 'ai-greeting'))
+    if (!hasGreeting) {
       messages.unshift(greetingMessage())
     }
     return {
@@ -242,14 +247,15 @@ export default function TemanCerita() {
       toast.showToast('Cerita dulu sedikit, ya.', 'error')
       return
     }
+    setDraftOpen(true)
     try {
       const result = await draftMutation.mutateAsync({
         conversationId,
         messages,
       })
       setDraft(result)
-      setDraftOpen(true)
     } catch (error) {
+      setDraftOpen(false)
       toast.showToast(
         error?.message ?? 'Gagal membuat draf laporan.',
         'error',
@@ -296,15 +302,7 @@ export default function TemanCerita() {
         />
         <p>
           Teman Cerita adalah AI, bukan manusia dan bukan layanan darurat. Kalau
-          kamu sedang dalam bahaya, hubungi pengurus atau ustaz terdekat, atau
-          telepon{' '}
-          <a
-            href="tel:129"
-            className="font-semibold text-[#163b2f] underline underline-offset-2"
-          >
-            SAPA 129
-          </a>
-          .
+          kamu sedang dalam bahaya, segera hubungi dan temui pengurus atau ustaz terdekat.
         </p>
       </div>
 
@@ -313,13 +311,8 @@ export default function TemanCerita() {
           role="alert"
           className="mb-3 rounded-2xl border border-[#e7a48f] bg-[#ffe3d9] px-4 py-3 text-sm text-[#7c2d17]"
         >
-          Keselamatanmu yang paling penting. Tolong segera hubungi pengurus,
-          ustaz, atau orang dewasa yang kamu percaya. Kamu juga bisa menghubungi
-          SAPA 129 melalui{' '}
-          <a href="tel:129" className="font-semibold underline underline-offset-2">
-            telepon 129
-          </a>
-          .
+          Keselamatanmu yang paling penting. Tolong segera temui pengurus,
+          ustaz, atau orang dewasa yang kamu percaya di pesantren untuk mendapatkan bantuan langsung.
         </div>
       ) : null}
 
@@ -494,21 +487,35 @@ export default function TemanCerita() {
       </Card>
 
       <Modal
-        open={draftOpen && Boolean(draft)}
+        open={draftOpen}
         onClose={() => setDraftOpen(false)}
         title="Draf laporan dari ceritamu"
         footer={
-          <>
-            <Button variant="ghost" onClick={() => setDraftOpen(false)}>
-              Nanti saja
-            </Button>
-            <Button onClick={goToForm} disabled={draftTooShort}>
-              Lanjut ke formulir
-            </Button>
-          </>
+          draftMutation.isPending ? null : (
+            <>
+              <Button variant="ghost" onClick={() => setDraftOpen(false)}>
+                Nanti saja
+              </Button>
+              <Button onClick={goToForm} disabled={draftTooShort || !draft}>
+                Lanjut ke formulir
+              </Button>
+            </>
+          )
         }
       >
-        {draft ? (
+        {draftMutation.isPending ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <span className="flex size-12 items-center justify-center rounded-2xl bg-[#d9f0e1] text-[#34744e]">
+              <Sparkles className="size-6 animate-spin" />
+            </span>
+            <p className="mt-3 font-semibold text-navy">
+              Menyusun ringkasan draf dengan AI…
+            </p>
+            <p className="mt-1 text-xs text-body">
+              Sedang merapikan ceritamu ke dalam format laporan yang terstruktur. Mohon tunggu sebentar.
+            </p>
+          </div>
+        ) : draft ? (
           <>
             <p className="text-sm text-body">
               Periksa dan ubah dulu. Laporan baru terkirim setelah kamu menekan

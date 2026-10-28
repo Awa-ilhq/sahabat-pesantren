@@ -53,6 +53,17 @@ export const useStaffReports = (filters) =>
     placeholderData: (previous) => previous,
   })
 
+export const useDeleteReport = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.reports.deleteReport(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
+    },
+  })
+}
+
 export const useCreateReport = () => {
   const queryClient = useQueryClient()
   return useMutation({
