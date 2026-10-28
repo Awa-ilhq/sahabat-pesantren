@@ -1,6 +1,8 @@
 import { http } from '../client'
 import { adaptUser } from '../adapters'
 
+const unwrap = (response) => response.data.data ?? response.data
+
 export const login = async ({ identifier, password }) => {
   const { data } = await http.post(
     '/auth/login',
@@ -28,6 +30,18 @@ export const changePassword = async ({ currentPassword, newPassword }) => {
     password: newPassword,
     password_confirmation: newPassword,
   })
+}
+
+export const updateProfile = async (payload) => {
+  const { data } = await http.put('/auth/profile', payload)
+  const result = unwrap(data)
+  return adaptUser(result?.user ?? result)
+}
+
+export const getProfile = async () => {
+  const { data } = await http.get('/auth/me')
+  const result = unwrap(data)
+  return adaptUser(result?.user ?? result)
 }
 
 export const logout = async (token) => {

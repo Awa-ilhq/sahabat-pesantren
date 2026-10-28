@@ -69,6 +69,25 @@ export function AuthProvider({ children }) {
     [],
   )
 
+  const updateProfile = useCallback(
+    async (payload) => {
+      const user = await api.auth.updateProfile(payload)
+      const current = getSession()
+      if (current) {
+        const next = {
+          ...current,
+          user: { ...current.user, ...user },
+        }
+        setSessionState(next)
+        setSession(next)
+        return next.user
+      }
+      store({ token: current?.token, user })
+      return user
+    },
+    [store],
+  )
+
   useEffect(
     () =>
       onSessionExpired(() => {
@@ -120,8 +139,9 @@ export function AuthProvider({ children }) {
       logout,
       quickExit,
       changePassword,
+      updateProfile,
     }),
-    [session, login, logout, quickExit, changePassword],
+    [session, login, logout, quickExit, changePassword, updateProfile],
   )
 
   return (

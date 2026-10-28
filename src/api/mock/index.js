@@ -330,6 +330,46 @@ export const auth = {
     return { ok: true }
   },
 
+  async updateProfile(payload = {}) {
+    await delay()
+    const account = requireUser()
+    if (payload.name !== undefined) account.name = payload.name
+    if (payload.email !== undefined) account.email = payload.email || null
+    if (payload.phone !== undefined) account.teleponOrtu = payload.phone || null
+    if (payload.telepon_ortu !== undefined) account.teleponOrtu = payload.telepon_ortu || null
+    if (payload.nis !== undefined) account.nis = payload.nis || account.nis
+    return {
+      user: adaptUser({
+        id: account.id,
+        name: account.name,
+        role: account.role,
+        email: account.email,
+        nis: account.nis,
+        telepon_ortu: account.teleponOrtu,
+        username: account.username,
+        must_change_password: account.mustChangePassword,
+      }),
+      message: 'Profil berhasil diperbarui.',
+    }
+  },
+
+  async getProfile() {
+    await delay()
+    const account = requireUser()
+    return {
+      user: adaptUser({
+        id: account.id,
+        name: account.name,
+        role: account.role,
+        email: account.email,
+        nis: account.nis,
+        telepon_ortu: account.teleponOrtu,
+        username: account.username,
+        must_change_password: account.mustChangePassword,
+      }),
+    }
+  },
+
   async logout(_token) {
     void _token
     await delay(120)

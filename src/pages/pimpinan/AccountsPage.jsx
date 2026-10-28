@@ -31,7 +31,6 @@ import {
 import { cn } from '../../lib/cn'
 import { MAX_IMPORT_BYTES, ROLE_LABELS, ROLES } from '../../lib/constants'
 import { downloadBlob } from '../../lib/download'
-import { createSantriTemplateWorkbookBlob } from '../../lib/santriWorkbook'
 
 const ACTIVE_OPTIONS = [
   { value: '', label: 'Semua status' },
@@ -403,15 +402,6 @@ function ImportTab() {
     }
   }
 
-
-    try {
-
-
-    } catch (error) {
-
-    }
-  }
-
   const downloadCurrentData = async () => {
     try {
       const file = await exportSantri.mutateAsync()
@@ -438,18 +428,9 @@ function ImportTab() {
           <Button
             variant="secondary"
             size="sm"
-
-          >
-
-
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
             loading={exportSantri.isPending}
             onClick={downloadCurrentData}
           >
-
             <Download aria-hidden="true" className="size-4" />
             Unduh data saat ini
           </Button>
@@ -562,7 +543,7 @@ function ImportTab() {
       ) : null}
     </div>
   )
-
+}
 
 export default function AccountsPage() {
   const [tab, setTab] = useState('pengurus')
