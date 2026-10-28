@@ -158,8 +158,10 @@ export default function StaffReportDetailPage() {
     const next = event.target.value
     updateStatus.mutate(next, {
       onSuccess: () => toast.showToast('Status laporan diperbarui.', 'success'),
-      onError: (mutationError) =>
-        toast.showToast(mutationError?.message ?? 'Gagal memperbarui status.', 'error'),
+      onError: (mutationError) => {
+        if (mutationError?.status === 409) refetch()
+        toast.showToast(mutationError?.message ?? 'Gagal memperbarui status.', 'error')
+      },
     })
   }
 
@@ -243,6 +245,9 @@ export default function StaffReportDetailPage() {
       await queryClient.invalidateQueries({ queryKey: ['reports'] })
       await refetch()
     } catch (mutationError) {
+      if (mutationError?.status === 409) {
+        await refetch()
+      }
       setFormError(mutationError?.message ?? 'Gagal mengeskalasi laporan.')
       toast.showToast(mutationError?.message ?? 'Gagal mengeskalasi laporan.', 'error')
     }

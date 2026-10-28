@@ -13,10 +13,12 @@ const validForm = {
   catatan_pengurus: 'Mohon ditindaklanjuti.',
 }
 
-test('eskalasi hanya tersedia bagi pengurus untuk laporan yang belum terkunci', () => {
+test('eskalasi tersedia bagi pengurus dan pimpinan untuk laporan yang belum terkunci', () => {
   assert.equal(canEscalateReport('pengurus', { status: 'baru' }), true)
+  assert.equal(canEscalateReport('PENGURUS', { status: 'baru' }), true)
+  assert.equal(canEscalateReport('pimpinan', { status: 'baru' }), true)
+  assert.equal(canEscalateReport('PIMPINAN', { status: 'baru' }), true)
   assert.equal(canEscalateReport('santri', { status: 'baru' }), false)
-  assert.equal(canEscalateReport('pimpinan', { status: 'baru' }), false)
   assert.equal(canEscalateReport('pengawas', { status: 'baru' }), false)
   assert.equal(
     canEscalateReport('pengurus', {

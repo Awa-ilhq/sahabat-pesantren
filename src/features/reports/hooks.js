@@ -61,6 +61,11 @@ export const useDeleteReport = () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
     },
+    onError: (error) => {
+      if (error?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: ['reports'] })
+      }
+    },
   })
 }
 
@@ -87,6 +92,11 @@ export const useUpdateIdentity = (id) => {
       queryClient.invalidateQueries({ queryKey: ['reports', 'mine'] })
       queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
     },
+    onError: (error) => {
+      if (error?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
+      }
+    },
   })
 }
 
@@ -98,6 +108,11 @@ export const useUpdateStatus = (id) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
       queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
+    },
+    onError: (error) => {
+      if (error?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
+      }
     },
   })
 }
@@ -139,6 +154,11 @@ export const useRequestIdentity = (id) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
       queryClient.invalidateQueries({ queryKey: ['reports'] })
     },
+    onError: (error) => {
+      if (error?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
+      }
+    },
   })
 }
 
@@ -150,6 +170,11 @@ export const useAnswerIdentityRequest = (id) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
       queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
+    },
+    onError: (error) => {
+      if (error?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
+      }
     },
   })
 }
@@ -170,6 +195,11 @@ export const useAddNote = (id, authorName) => {
         }
         return { ...report, catatan: [...notes, note] }
       })
+    },
+    onError: (error) => {
+      if (error?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
+      }
     },
   })
 }

@@ -18,5 +18,10 @@ export const useSendMessage = (id) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: reportKeys.conversation(id) })
     },
+    onError: (error) => {
+      if (error?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
+      }
+    },
   })
 }

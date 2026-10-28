@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   CircleDot,
   FileText,
+  Forward,
   Hourglass,
   Inbox,
   Search,
@@ -35,6 +36,7 @@ import {
   startOfToday,
 } from '../../lib/formatDate'
 import { cn } from '../../lib/cn'
+import { canEscalateReport, isReportLocked } from '../../features/reports/escalation'
 
 const ALL = ''
 const EMPTY_REPORTS = []
@@ -302,6 +304,11 @@ export default function StaffReportListPage() {
                           </span>
                         ) : null}
                         <StatusBadge status={report.status} />
+                        {isReportLocked(report) ? (
+                          <span className="rounded-full bg-[#fbe9e7] px-2.5 py-1 text-[10px] font-bold text-danger">
+                            Terkunci
+                          </span>
+                        ) : null}
                         {report.edited === true ? (
                           <span className="rounded-full bg-[#edf0ed] px-2.5 py-1 text-[10px] font-bold text-[#536158]">
                             Diedit
@@ -333,6 +340,12 @@ export default function StaffReportListPage() {
                       <span className="text-body">
                         {formatDateOnly(report.createdAt)}
                       </span>
+                      {canEscalateReport(user?.role, report) ? (
+                        <span className="mt-1 inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-primary/30 bg-white px-4 py-2 text-sm font-bold text-primary">
+                          <Forward aria-hidden="true" className="size-4" />
+                          Eskalasi
+                        </span>
+                      ) : null}
                     </div>
                   </Link>
                 </li>

@@ -642,7 +642,7 @@ export const reports = {
   async escalate(id, payload = {}) {
     await delay()
     const user = requireUser()
-    requireRole(user, ['pengurus'])
+    requireRole(user, ['pengurus', 'pimpinan'])
     const report = accessibleReport(user, id)
     assertUnlocked(report)
     const tujuan = payload.tujuan
@@ -679,7 +679,7 @@ export const reports = {
   async downloadEscalationPdf(id) {
     await delay()
     const user = requireUser()
-    requireRole(user, ['pengurus'])
+    requireRole(user, ['pengurus', 'pimpinan'])
     const report = accessibleReport(user, id)
     if (!report.isLocked && report.status !== 'DITERUSKAN_KE_BERWAJIB') {
       fail(404, 'PDF surat pengantar belum tersedia.')

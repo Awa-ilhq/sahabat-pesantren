@@ -114,6 +114,9 @@ export default function SantriReportDetailPage() {
       toast.showToast('Laporan berhasil dihapus.', 'success')
       navigate('/santri/laporan-saya', { replace: true })
     } catch (err) {
+      if (err?.status === 409) {
+        await refetch()
+      }
       toast.showToast(err?.message ?? 'Gagal menghapus laporan.', 'error')
     }
   }

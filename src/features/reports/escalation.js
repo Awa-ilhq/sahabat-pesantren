@@ -4,8 +4,11 @@ export const isReportLocked = (report) =>
   report?.isLocked === true ||
   report?.status === 'DITERUSKAN_KE_BERWAJIB'
 
-export const canEscalateReport = (role, report) =>
-  role === ROLES.PENGURUS && !isReportLocked(report)
+export const canEscalateReport = (role, report) => {
+  const normalizedRole = String(role ?? '').toLowerCase()
+  const canEscalateRole = [ROLES.PENGURUS, ROLES.PIMPINAN].includes(normalizedRole)
+  return canEscalateRole && !isReportLocked(report)
+}
 
 export const validateEscalationForm = (form) => {
   if (!form.tujuan) return 'Pilih tujuan eskalasi.'

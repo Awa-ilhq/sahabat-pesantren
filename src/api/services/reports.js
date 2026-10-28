@@ -199,20 +199,20 @@ export const escalate = async (id, payload = {}) => {
 export const escalateReport = escalate
 
 export const downloadEscalationPdf = async (id, downloadUrl) => {
-  let url = downloadUrl
-  if (typeof url === 'string' && !/^https?:\/\//i.test(url)) {
+  let url = typeof downloadUrl === 'string' ? downloadUrl.trim() : ''
+  if (!/^https?:\/\//i.test(url)) {
     if (url.startsWith('/api/')) {
-      url = API_URL ? `${API_URL}${url}` : url.slice(4)
-    } else if (!url.startsWith('/')) {
-      url = `/${url}`
+      url = API_URL ? `${API_URL}${url}` : url
+    } else if (url.startsWith('/petugas/')) {
+      // http baseURL sudah berisi /api; gunakan path relatif tanpa garis miring awal.
+      url = url.slice(1)
+    } else if (url && !url.startsWith('petugas/')) {
+      url = `/petugas/laporan/${id}/eskalasi/pdf`
     }
   }
-  const response = await http.get(
-    url || `/petugas/laporan/${id}/eskalasi/pdf`,
-    {
-    responseType: 'blob',
-    },
-  )
+  if (!url) url = `/petugas/laporan/${id}/eskalasi/pdf`
+
+  const response = await http.get(url, { responseType: 'blob' })
   return response.data
 }
 
