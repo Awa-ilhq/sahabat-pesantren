@@ -152,7 +152,7 @@ export default function LoginPage() {
           <ul className="mt-9 hidden flex-wrap gap-3 sm:flex">
             {[
               ['nama disembunyiin', 'bg-[#B8F2D2] -rotate-6'],
-              ['ditinjau dalam 24 jam', 'bg-[#FFB8A3] rotate-3'],
+              ['Laporanmu akan ditinjau dalam 24 jam.', 'bg-[#FFB8A3] rotate-3'], 
               ['no judgement', 'bg-[#FFE27A] -rotate-2'],
             ].map(([text, tone], index) => (
               <li

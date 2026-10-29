@@ -159,7 +159,7 @@ export default function DashboardPage() {
           label="Laporan terlambat"
           value={data.jumlahTerlambat ?? data.jumlah_terlambat ?? 0}
           tone="danger"
-          hint="Laporan berstatus baru berusia ≥ 24 jam."
+          hint="Jumlah laporan terlambat dari ringkasan API."
         />
       </div>
 

@@ -84,7 +84,6 @@ export const adaptReport = (raw) =>
       perluKlarifikasi: Boolean(raw.perlu_klarifikasi),
       statusChangedAt: raw.status_diubah ?? null,
       terlambat: raw.terlambat === true,
-      lewatBatas: raw.lewat_batas === true || raw.terlambat === true,
       edited: raw.diedit === true || raw.edited === true,
       updatedAt: raw.diubah_pada ?? raw.updated_at ?? null,
       // Waktu baca per peran dipakai untuk menurunkan notifikasi saat
@@ -144,18 +143,23 @@ export const adaptPagination = (meta, itemCount = 0) => {
   return { currentPage, lastPage, total, perPage }
 }
 
-export const adaptNotificationSummary = (raw) => ({
-  permintaanIdentitas: raw?.permintaan_identitas ?? 0,
-  pesanBaru: raw?.pesan_baru ?? 0,
-  statusDiubah: raw?.status_diubah ?? 0,
-  laporanBaru: raw?.laporan_baru ?? 0,
-  total:
-    raw?.pembaruan ??
-    (raw?.permintaan_identitas ?? 0) +
-    (raw?.pesan_baru ?? 0) +
-    (raw?.status_diubah ?? 0) +
-    (raw?.laporan_baru ?? 0),
-})
+export const adaptNotificationSummary = (raw) => {
+  const laporanTerlambat = Number(raw?.laporan_terlambat ?? 0)
+  return {
+    permintaanIdentitas: raw?.permintaan_identitas ?? 0,
+    pesanBaru: raw?.pesan_baru ?? 0,
+    statusDiubah: raw?.status_diubah ?? 0,
+    laporanBaru: raw?.laporan_baru ?? 0,
+    laporanTerlambat,
+    total:
+      raw?.pembaruan ??
+      (raw?.permintaan_identitas ?? 0) +
+      (raw?.pesan_baru ?? 0) +
+      (raw?.status_diubah ?? 0) +
+      (raw?.laporan_baru ?? 0) +
+      laporanTerlambat,
+  }
+}
 
 export const adaptNotification = (raw) =>
   raw
@@ -168,6 +172,7 @@ export const adaptNotification = (raw) =>
       kategori: raw.kategori ?? raw.laporan?.kategori ?? raw.report?.kategori ?? null,
       waktu: raw.waktu ?? raw.created_at ?? raw.updated_at ?? null,
       statusBaru: raw.status_baru ?? raw.status ?? null,
+      statusLaporan: raw.status_laporan ?? raw.laporan?.status ?? raw.report?.status ?? null,
       pengirim:
         raw.pengirim?.name ??
         raw.sender_name ??
@@ -264,6 +269,7 @@ export const adaptSummary = (raw) => ({
   auditHariIni:
     raw?.audit_hari_ini ?? raw?.aktivitas_hari_ini ?? raw?.audit_today ?? 0,
   jumlahTerlambat: Number(raw?.jumlah_terlambat ?? raw?.laporan_terlambat ?? 0),
+  jumlah_terlambat: Number(raw?.jumlah_terlambat ?? raw?.laporan_terlambat ?? 0),
   perStatus: raw?.laporan_per_status ?? raw?.per_status ?? {},
   perKategori: raw?.laporan_per_kategori ?? raw?.per_kategori ?? {},
 })

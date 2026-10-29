@@ -149,7 +149,7 @@ export default function HomePage() {
             </div>
             <div className="absolute right-0 top-10 z-20 rounded-2xl bg-white px-4 py-3 shadow-[0_12px_30px_rgba(18,55,42,0.12)] sm:right-2">
               <p className="text-xs font-medium text-body">Ditanggapi</p>
-              <p className="font-extrabold text-navy">Laporanmu akan ditinjau dalam 24 jam</p>
+              <p className="font-extrabold text-navy">Laporanmu akan ditinjau dalam 24 jam.</p>
             </div>
           </div>
         </div>

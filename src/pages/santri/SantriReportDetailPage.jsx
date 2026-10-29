@@ -139,7 +139,7 @@ export default function SantriReportDetailPage() {
             {report.noLaporan}
           </span>
           <div className="flex flex-wrap items-center gap-2">
-            {report.terlambat === true || report.lewatBatas === true ? <LateBadge /> : null}
+            {report.terlambat === true ? <LateBadge /> : null}
             {report.edited === true ? (
               <span className="rounded-full bg-[#edf0ed] px-2.5 py-1 text-[10px] font-bold text-[#536158]">
                 Diedit
@@ -160,7 +160,7 @@ export default function SantriReportDetailPage() {
           <span>Dibuat {formatDateOnly(report.createdAt)}</span>
           <span className="inline-flex items-center gap-1 font-medium text-[#163b2f]">
             <Clock className="size-3.5 text-[#34744e]" />
-            Target respon: Maksimal 24 jam kerja
+            Laporanmu akan ditinjau dalam 24 jam.
           </span>
         </div>
         <p className="mt-3 rounded-2xl bg-white p-4" data-pre-wrap>

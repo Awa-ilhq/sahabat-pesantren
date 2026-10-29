@@ -281,7 +281,7 @@ export default function MyReportsPage() {
                               {report.noLaporan}
                             </span>
                             <StatusPill status={report.status} />
-                            {report.terlambat === true || report.lewatBatas === true ? <LateBadge /> : null}
+                            {report.terlambat === true ? <LateBadge /> : null}
                             {report.edited === true ? (
                               <span className="rounded-full bg-[#edf0ed] px-2.5 py-1 text-[10px] font-bold text-[#536158]">
                                 Diedit
@@ -306,7 +306,7 @@ export default function MyReportsPage() {
                               {CATEGORY_LABELS[report.kategori] ?? report.kategori}
                             </span>
                             <span className="text-[10px] text-[#718078]">
-                              Dibuat {formatDateOnly(report.createdAt)} {report.status === 'baru' ? '· Respon maks. 24 jam' : ''}
+                              Dibuat {formatDateOnly(report.createdAt)}
                             </span>
                           </div>
                         </div>

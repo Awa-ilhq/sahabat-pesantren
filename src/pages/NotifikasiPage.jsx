@@ -5,6 +5,7 @@ import {
   MessageCircle,
   RefreshCw,
   ShieldQuestion,
+  AlertTriangle,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
@@ -17,7 +18,11 @@ import {
   CategoryBadge,
   StatusBadge,
 } from '../features/reports/components/badges'
-import { useNotifications } from '../features/notifications/hooks'
+import {
+  useNotifications,
+  useNotificationSummary,
+} from '../features/notifications/hooks'
+import { isLateReportNotificationVisible } from '../features/notifications/rules'
 import { cn } from '../lib/cn'
 import {
   ROLES,
@@ -32,6 +37,11 @@ const NOTIFICATION_CARD_SURFACE =
   '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
 
 const NOTIFICATION_META = {
+  laporan_terlambat: {
+    label: 'Peringatan keterlambatan',
+    icon: AlertTriangle,
+    iconClass: 'bg-[#ffddd1] text-danger',
+  },
   laporan_baru: {
     label: 'Laporan baru',
     icon: FilePlus2,
@@ -61,6 +71,9 @@ const FALLBACK_META = {
 }
 
 function descriptionFor(item, role) {
+  if (item.tipe === 'laporan_terlambat') {
+    return 'Laporan berstatus baru telah melewati batas waktu peninjauan.'
+  }
   if (item.tipe === 'laporan_baru') {
     return 'Ada laporan baru yang masuk dan belum kamu buka.'
   }
@@ -84,9 +97,12 @@ function descriptionFor(item, role) {
 export default function NotifikasiPage() {
   const { user } = useAuth()
   const { data, isLoading, isError, isFetching, refetch } = useNotifications()
+  const { data: notificationSummary } = useNotificationSummary()
 
   const role = user?.role
-  const items = data?.items ?? EMPTY_ITEMS
+  const items = (data?.items ?? EMPTY_ITEMS).filter((item) =>
+    isLateReportNotificationVisible(item),
+  )
   const total = Number(data?.meta?.total ?? items.length)
   const detailPath = (id) => reportDetailPath(role, id)
 
@@ -153,6 +169,20 @@ export default function NotifikasiPage() {
                 : 'Semua pembaruan sudah kamu baca.'}
             </p>
           </Card>
+
+          {role === ROLES.PENGAWAS ? (
+            <Card className={`${NOTIFICATION_CARD_SURFACE} flex items-center gap-3 p-5`}>
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-[#ffddd1] text-danger">
+                <AlertTriangle aria-hidden="true" className="size-6" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-body">Laporan terlambat</p>
+                <p className="text-3xl font-extrabold leading-none text-navy">
+                  {Number(notificationSummary?.laporanTerlambat ?? 0)}
+                </p>
+              </div>
+            </Card>
+          ) : null}
 
           {items.length ? (
             <ul className="flex flex-col gap-3">

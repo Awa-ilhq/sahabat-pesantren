@@ -894,10 +894,14 @@ export const notifications = {
     const visible = reportStore.filter((item) => canView(user, item))
     let laporanBaru = 0
     let pesanBaru = 0
+    let laporanTerlambat = 0
 
     visible.forEach((report) => {
       const snapshot = snapshotFor(user, report)
       if (report.status === 'baru' && !snapshot) laporanBaru += 1
+      if (user.role === 'pengawas' && report.status === 'baru' && report.terlambat === true) {
+        laporanTerlambat += 1
+      }
       if (
         report.status !== 'selesai' &&
         hasNewMessages(report, user, snapshot)
@@ -909,7 +913,8 @@ export const notifications = {
     return adaptNotificationSummary({
       laporan_baru: laporanBaru,
       pesan_baru: pesanBaru,
-      pembaruan: laporanBaru + pesanBaru,
+      laporan_terlambat: laporanTerlambat,
+      pembaruan: laporanBaru + pesanBaru + laporanTerlambat,
     })
   },
 
@@ -978,6 +983,12 @@ export const notifications = {
         .filter((item) => canView(user, item))
         .forEach((report) => {
           const snapshot = snapshotFor(user, report)
+
+          if (user.role === 'pengawas' && report.status === 'baru' && report.terlambat === true) {
+            push(report, 'laporan_terlambat', report.createdAt, {
+              statusLaporan: report.status,
+            })
+          }
 
           if (report.status === 'baru' && !snapshot) {
             push(report, 'laporan_baru', report.createdAt)

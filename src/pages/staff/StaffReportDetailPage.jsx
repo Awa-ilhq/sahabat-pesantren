@@ -298,7 +298,7 @@ export default function StaffReportDetailPage() {
             {report.noLaporan}
           </span>
           <div className="flex flex-wrap items-center gap-2">
-            {report.terlambat === true || report.lewatBatas === true ? <LateBadge /> : null}
+            {report.terlambat === true ? <LateBadge /> : null}
             {report.edited === true ? (
               <span className="rounded-full bg-[#edf0ed] px-2.5 py-1 text-[10px] font-bold text-[#536158]">
                 Diedit
