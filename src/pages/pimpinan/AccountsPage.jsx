@@ -334,7 +334,7 @@ function AccountsTab({ role }) {
   )
 }
 
-function ImportTab() {
+function ImportTab({ onImported }) {
   const toast = useToast()
   const inputRef = useRef(null)
   const preview = usePreviewImport()
@@ -347,6 +347,7 @@ function ImportTab() {
   const [result, setResult] = useState(null)
 
   const resetPreview = () => {
+    setFile(null)
     setRows(null)
     setCanImport(false)
     setResult(null)
@@ -383,11 +384,13 @@ function ImportTab() {
     if (!file || !canImport) return
     try {
       const data = await importMut.mutateAsync({ file })
-      setResult(data)
+      resetPreview()
+      if (inputRef.current) inputRef.current.value = ''
       toast.showToast(
         data.message ?? `${data.imported} data santri berhasil diproses.`,
         'success',
       )
+      onImported?.()
     } catch (error) {
       toast.showToast(error?.message ?? 'Impor gagal.', 'error')
     }
@@ -586,7 +589,7 @@ export default function AccountsPage() {
       ) : tab === 'santri' ? (
         <AccountsTab role={ROLES.SANTRI} />
       ) : (
-        <ImportTab />
+        <ImportTab onImported={() => setTab('santri')} />
       )}
     </div>
   )

@@ -49,7 +49,15 @@ export const useImportSantri = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload) => api.admin.importSantri(payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['admin', 'accounts'] }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['admin', 'accounts'],
+        refetchType: 'none',
+      })
+      await queryClient.refetchQueries({
+        queryKey: ['admin', 'accounts'],
+        type: 'all',
+      })
+    },
   })
 }
