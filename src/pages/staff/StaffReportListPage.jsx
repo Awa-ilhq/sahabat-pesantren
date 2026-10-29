@@ -29,12 +29,8 @@ import {
   reportDetailPath,
 } from '../../lib/constants'
 import { displayReporter } from '../../lib/displayReporter'
-import {
-  dueState,
-  formatDateOnly,
-  parseDateOnly,
-  startOfToday,
-} from '../../lib/formatDate'
+import { formatDateOnly } from '../../lib/formatDate'
+import { isReportLate, countLateReports } from '../../lib/reportDeadline'
 import { cn } from '../../lib/cn'
 import { canEscalateReport, isReportLocked } from '../../features/reports/escalation'
 
@@ -54,6 +50,13 @@ const STATUS_SUMMARY = [
   { status: 'overdue', label: 'Lewat batas', icon: AlertTriangle, tone: 'coral' },
   { status: 'selesai', label: 'Selesai', icon: CheckCircle2, tone: 'green' },
 ]
+
+function dueDescription(report) {
+  if (isReportLate(report)) return 'Lewat batas'
+  if (report.status === 'selesai') return 'Selesai'
+  if (report.status === 'diproses') return 'Sedang ditangani'
+  return 'Menunggu peninjauan'
+}
 
 function SummaryCard({ icon: Icon, label, value, tone }) {
   const toneClasses = {
@@ -83,39 +86,6 @@ function SummaryCard({ icon: Icon, label, value, tone }) {
       <p className="mt-1 text-xs font-semibold leading-none text-navy/80">{label}</p>
     </div>
   )
-}
-
-function isOverdue(report) {
-  if (report.status !== 'baru') return false
-  if (report.terlambat === true || report.lewatBatas === true) return true
-  return dueState(report.batasKlarifikasi) === 'overdue'
-}
-
-function dueDescription(report) {
-  if (report.status === 'selesai') return 'Selesai'
-  if (report.status === 'baru' && (report.terlambat === true || report.lewatBatas === true)) {
-    return 'Lewat batas'
-  }
-  const state = dueState(report.batasKlarifikasi)
-  if (state === 'overdue') {
-    const dueDate = parseDateOnly(report.batasKlarifikasi)
-    const daysLate = Math.max(
-      1,
-      Math.floor((startOfToday().getTime() - dueDate.getTime()) / 86400000),
-    )
-    return `Lewat ${daysLate} hari`
-  }
-  if (state === 'today') return 'Batas: hari ini'
-  if (state === 'upcoming') {
-    const dueDate = parseDateOnly(report.batasKlarifikasi)
-    const daysUntil = Math.floor(
-      (dueDate.getTime() - startOfToday().getTime()) / 86400000,
-    )
-    return daysUntil === 1
-      ? 'Batas: besok'
-      : `Batas: ${formatDateOnly(report.batasKlarifikasi)}`
-  }
-  return 'Batas belum ditentukan'
 }
 
 export default function StaffReportListPage() {
@@ -154,7 +124,7 @@ export default function StaffReportListPage() {
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE,
   )
-  const overdueCount = reports.filter((report) => report.status === 'baru' && (report.terlambat === true || report.lewatBatas === true || isOverdue(report))).length
+  const overdueCount = countLateReports(reports)
   const summaries = [
     reports.filter((report) => report.status === 'baru').length,
     reports.filter((report) => report.status === 'diproses').length,
@@ -281,7 +251,7 @@ export default function StaffReportListPage() {
           </p>
           <ul className="flex flex-col gap-3">
             {pageReports.map((report) => {
-              const overdue = isOverdue(report)
+              const overdue = isReportLate(report)
               return (
                 <li key={report.id}>
                   <Link
@@ -296,13 +266,7 @@ export default function StaffReportListPage() {
                         <span className="font-sans text-base font-extrabold text-navy">
                           {report.noLaporan}
                         </span>
-                        {report.terlambat === true || report.lewatBatas === true ? <LateBadge /> : null}
-                        {overdue || report.terlambat === true || report.lewatBatas === true ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-salmon px-2.5 py-1 text-[11px] font-bold text-white">
-                            <AlertTriangle aria-hidden="true" className="size-3.5" />
-                            Lewat batas
-                          </span>
-                        ) : null}
+                        {overdue ? <LateBadge /> : null}
                         <StatusBadge status={report.status} />
                         {isReportLocked(report) ? (
                           <span className="rounded-full bg-[#fbe9e7] px-2.5 py-1 text-[10px] font-bold text-danger">

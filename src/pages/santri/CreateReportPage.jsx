@@ -93,7 +93,7 @@ function SuccessScreen({ report }) {
       </span>
       <h1 className="mt-4 text-3xl">Laporanmu sudah terkirim</h1>
       <p className="mt-2 text-body">
-        Terima kasih sudah berani bercerita. Laporanmu akan diperiksa petugas
+        Terima kasih sudah berani bercerita.
         Laporanmu akan ditinjau dalam 24 jam.
       </p>
 
@@ -312,7 +312,7 @@ export default function CreateReportPage() {
         ) : kePimpinan ? (
           <div className="flex items-start gap-2 rounded-2xl border border-primary/40 bg-amber/15 px-4 py-3 text-sm text-navy">
             <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary-hover" />
-            <p>Laporan tentang pengurus akan langsung diteruskan ke pimpinan.</p>
+            <p>Pengawas dapat menerima laporan ini untuk membantu penanganannya.</p>
           </div>
         ) : null}
 

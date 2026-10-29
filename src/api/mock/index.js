@@ -646,7 +646,7 @@ export const reports = {
     const report = accessibleReport(user, id)
     assertUnlocked(report)
     const tujuan = payload.tujuan
-    const phone = String(payload.nomor_wa_tujuan ?? '').trim()
+    const defaultPhones = { polsek: '+6288216289887', uppt_ppa: '+62882003668995', pengurus_pusat: '+628817718672' }; const phone = String(payload.nomor_wa_tujuan || defaultPhones[tujuan] || '').trim()
     const catatan = String(payload.catatan_pengurus ?? '').trim()
     const errors = {}
     if (!['polsek', 'uppt_ppa', 'pengurus_pusat'].includes(tujuan)) {
@@ -894,10 +894,14 @@ export const notifications = {
     const visible = reportStore.filter((item) => canView(user, item))
     let laporanBaru = 0
     let pesanBaru = 0
+    let laporanTerlambat = 0
 
     visible.forEach((report) => {
       const snapshot = snapshotFor(user, report)
       if (report.status === 'baru' && !snapshot) laporanBaru += 1
+      if (user.role === 'pengawas' && report.status === 'baru' && report.terlambat === true) {
+        laporanTerlambat += 1
+      }
       if (
         report.status !== 'selesai' &&
         hasNewMessages(report, user, snapshot)
@@ -909,7 +913,8 @@ export const notifications = {
     return adaptNotificationSummary({
       laporan_baru: laporanBaru,
       pesan_baru: pesanBaru,
-      pembaruan: laporanBaru + pesanBaru,
+      laporan_terlambat: laporanTerlambat,
+      pembaruan: laporanBaru + pesanBaru + laporanTerlambat,
     })
   },
 
@@ -978,6 +983,12 @@ export const notifications = {
         .filter((item) => canView(user, item))
         .forEach((report) => {
           const snapshot = snapshotFor(user, report)
+
+          if (user.role === 'pengawas' && report.status === 'baru' && report.terlambat === true) {
+            push(report, 'laporan_terlambat', report.createdAt, {
+              statusLaporan: report.status,
+            })
+          }
 
           if (report.status === 'baru' && !snapshot) {
             push(report, 'laporan_baru', report.createdAt)

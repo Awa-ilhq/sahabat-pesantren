@@ -109,6 +109,16 @@ const buildDerivedList = async () => {
       return
     }
 
+    if (role === ROLES.PENGAWAS && report.status === 'baru' && report.terlambat === true) {
+      items.push({
+        ...base,
+        id: `laporan_terlambat:${report.id}`,
+        tipe: 'laporan_terlambat',
+        waktu: report.createdAt,
+        statusLaporan: report.status,
+      })
+    }
+
     if (report.status === 'baru' && parseTime(readAt) == null) {
       items.push({
         ...base,
