@@ -646,7 +646,7 @@ export const reports = {
     const report = accessibleReport(user, id)
     assertUnlocked(report)
     const tujuan = payload.tujuan
-    const phone = String(payload.nomor_wa_tujuan ?? '').trim()
+    const defaultPhones = { polsek: '+6288216289887', uppt_ppa: '+62882003668995', pengurus_pusat: '+628817718672' }; const phone = String(payload.nomor_wa_tujuan || defaultPhones[tujuan] || '').trim()
     const catatan = String(payload.catatan_pengurus ?? '').trim()
     const errors = {}
     if (!['polsek', 'uppt_ppa', 'pengurus_pusat'].includes(tujuan)) {

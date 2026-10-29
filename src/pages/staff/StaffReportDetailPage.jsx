@@ -13,7 +13,6 @@ import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import EmptyState from '../../components/ui/EmptyState'
 import ErrorState from '../../components/ui/ErrorState'
-import Input from '../../components/ui/Input'
 import Modal from '../../components/ui/Modal'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
@@ -48,6 +47,7 @@ import {
   isReportLocked,
   runEscalationWorkflow,
   validateEscalationForm,
+  ESCALATION_TARGET_PHONES,
 } from '../../features/reports/escalation'
 
 const DETAIL_CARD_SURFACE =
@@ -95,8 +95,8 @@ export default function StaffReportDetailPage() {
   const [escalateOpen, setEscalateOpen] = useState(false)
   const [noteBody, setNoteBody] = useState('')
   const [form, setForm] = useState({
-    tujuan: '',
-    nomor_wa_tujuan: '',
+    tujuan: 'polsek',
+    nomor_wa_tujuan: ESCALATION_TARGET_PHONES.polsek,
     catatan_pengurus: '',
   })
   const [formError, setFormError] = useState('')
@@ -167,7 +167,11 @@ export default function StaffReportDetailPage() {
 
   const openEscalateDialog = () => {
     if (!canEscalate) return
-    setForm({ tujuan: '', nomor_wa_tujuan: '', catatan_pengurus: '' })
+    setForm({
+      tujuan: 'polsek',
+      nomor_wa_tujuan: ESCALATION_TARGET_PHONES.polsek,
+      catatan_pengurus: '',
+    })
     setFormError('')
     setEscalateOpen(true)
   }
@@ -175,7 +179,11 @@ export default function StaffReportDetailPage() {
   const closeEscalateDialog = () => {
     if (escalateMutation.isPending) return
     setEscalateOpen(false)
-    setForm({ tujuan: '', nomor_wa_tujuan: '', catatan_pengurus: '' })
+    setForm({
+      tujuan: 'polsek',
+      nomor_wa_tujuan: ESCALATION_TARGET_PHONES.polsek,
+      catatan_pengurus: '',
+    })
     setFormError('')
   }
 
@@ -196,7 +204,7 @@ export default function StaffReportDetailPage() {
     try {
       const payload = {
         tujuan: form.tujuan,
-        nomor_wa_tujuan: form.nomor_wa_tujuan.trim(),
+        nomor_wa_tujuan: (form.nomor_wa_tujuan || ESCALATION_TARGET_PHONES[form.tujuan] || '').trim(),
         catatan_pengurus: form.catatan_pengurus.trim(),
       }
       const workflow = await runEscalationWorkflow({
@@ -240,7 +248,11 @@ export default function StaffReportDetailPage() {
         'success',
       )
       setEscalateOpen(false)
-      setForm({ tujuan: '', nomor_wa_tujuan: '', catatan_pengurus: '' })
+      setForm({
+        tujuan: 'polsek',
+        nomor_wa_tujuan: ESCALATION_TARGET_PHONES.polsek,
+        catatan_pengurus: '',
+      })
       setFormError('')
       await queryClient.invalidateQueries({ queryKey: ['reports'] })
       await refetch()
@@ -470,24 +482,43 @@ export default function StaffReportDetailPage() {
             options={ESCALATION_TARGET_OPTIONS}
             value={form.tujuan}
             disabled={escalateMutation.isPending}
-            onChange={(e) => setForm((f) => ({ ...f, tujuan: e.target.value }))}
+            onChange={(e) => {
+              setFormError('')
+              const nextTujuan = e.target.value
+              setForm((f) => ({
+                ...f,
+                tujuan: nextTujuan,
+                nomor_wa_tujuan: ESCALATION_TARGET_PHONES[nextTujuan] || '',
+              }))
+            }}
           />
-          <Input
-            id="nomor-wa-tujuan"
-            label="Nomor WhatsApp tujuan"
-            placeholder="+6281234567890"
-            value={form.nomor_wa_tujuan}
-            disabled={escalateMutation.isPending}
-            onChange={(e) => setForm((f) => ({ ...f, nomor_wa_tujuan: e.target.value }))}
-            helperText="Gunakan format internasional seperti +6281234567890."
-          />
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-navy">
+              Nomor WhatsApp tujuan
+            </span>
+            <div className="flex h-12 w-full items-center justify-between rounded-xl border border-border bg-[#f8faf9] px-4 text-sm text-navy">
+              <span className="font-mono font-medium">
+                {ESCALATION_TARGET_PHONES[form.tujuan] || '-'}
+              </span>
+              <span className="rounded-full bg-[#edf6ef] px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+                Otomatis dari sistem
+              </span>
+            </div>
+            <p className="text-xs text-body">
+              Nomor WhatsApp resmi pihak terkait ditentukan otomatis oleh sistem sesuai tujuan eskalasi.
+            </p>
+          </div>
           <Textarea
             id="catatan-pengurus"
             label="Catatan pengurus"
+            placeholder="Tulis alasan eskalasi atau ringkasan tindakan yang telah diambil..."
             rows={4}
             value={form.catatan_pengurus}
             disabled={escalateMutation.isPending}
-            onChange={(e) => setForm((f) => ({ ...f, catatan_pengurus: e.target.value }))}
+            onChange={(e) => {
+              setFormError('')
+              setForm((f) => ({ ...f, catatan_pengurus: e.target.value }))
+            }}
           />
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
         </form>

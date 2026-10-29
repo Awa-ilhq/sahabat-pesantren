@@ -10,14 +10,20 @@ export const canEscalateReport = (role, report) => {
   return canEscalateRole && !isReportLocked(report)
 }
 
+export const ESCALATION_TARGET_PHONES = {
+  polsek: '+6288216289887',
+  uppt_ppa: '+62882003668995',
+  pengurus_pusat: '+628817718672',
+}
+
 export const validateEscalationForm = (form) => {
   if (!form.tujuan) return 'Pilih tujuan eskalasi.'
   if (!['polsek', 'uppt_ppa', 'pengurus_pusat'].includes(form.tujuan)) {
     return 'Tujuan eskalasi tidak valid.'
   }
 
-  const phone = String(form.nomor_wa_tujuan ?? '').trim()
-  if (!phone) return 'Nomor WhatsApp tujuan wajib diisi.'
+  const phone = String(form.nomor_wa_tujuan || ESCALATION_TARGET_PHONES[form.tujuan] || '').trim()
+  if (!phone) return 'Nomor WhatsApp tujuan belum tersedia di sistem.'
   if (!phone.startsWith('+')) {
     return 'Gunakan format internasional, contoh +6281234567890.'
   }
