@@ -65,6 +65,7 @@ function InfoRow({ label, children }) {
 }
 
 const ESCALATION_TARGET_OPTIONS = [
+  { value: '', label: 'Pilih tujuan eskalasi' },
   { value: 'polsek', label: 'Polsek' },
   { value: 'uppt_ppa', label: 'UPT PPA' },
   { value: 'pengurus_pusat', label: 'Pengurus Pusat' },
