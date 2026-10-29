@@ -30,6 +30,12 @@ test('peringatan laporan terlambat berhenti saat status bukan baru', () => {
   assert.equal(isLateReportNotificationVisible({ tipe: 'laporan_terlambat', statusLaporan: 'selesai' }), false)
 })
 
+test('halaman daftar tidak lagi memanggil perhitungan batas klarifikasi', () => {
+  const source = fs.readFileSync('src/pages/staff/StaffReportListPage.jsx', 'utf8')
+  assert.doesNotMatch(source, /dueState\s*\(|batasKlarifikasi|batas_klarifikasi/)
+  assert.match(source, /function dueDescription\(report\)/)
+})
+
 test('ketiga janji santri memakai teks persis yang disyaratkan', () => {
   assert.equal(STUDENT_DEADLINE_TEXT, exactText)
   for (const file of ['src/pages/HomePage.jsx', 'src/pages/santri/CreateReportPage.jsx', 'src/pages/LoginPage.jsx']) {

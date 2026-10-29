@@ -51,6 +51,13 @@ const STATUS_SUMMARY = [
   { status: 'selesai', label: 'Selesai', icon: CheckCircle2, tone: 'green' },
 ]
 
+function dueDescription(report) {
+  if (isReportLate(report)) return 'Lewat batas'
+  if (report.status === 'selesai') return 'Selesai'
+  if (report.status === 'diproses') return 'Sedang ditangani'
+  return 'Menunggu peninjauan'
+}
+
 function SummaryCard({ icon: Icon, label, value, tone }) {
   const toneClasses = {
     blue: 'bg-report-blue',
