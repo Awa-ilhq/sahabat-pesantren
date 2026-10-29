@@ -417,7 +417,7 @@ function ImportTab({ onImported }) {
         </h2>
         <p className="mt-1 text-sm text-body">
           Unduh data santri saat ini untuk mengedit data, lalu gunakan tombol impor santri untuk mengunggah berkas Excel (.xlsx).
-          kata sandi default setelah ditambahkan adalah "12345678"
+          kata sandi default setelah ditambahkan adalah  <b>"12345678"</b>
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button
