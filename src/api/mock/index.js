@@ -1027,7 +1027,7 @@ export const dashboard = {
   },
 
   async getAiSummary({ periode = 7 } = {}) {
-    await delay()
+    await delay(1000)
     const user = requireUser()
     requireRole(user, ['pimpinan', 'pengawas'])
 

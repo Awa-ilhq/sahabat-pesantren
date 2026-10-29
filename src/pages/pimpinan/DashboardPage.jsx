@@ -89,6 +89,8 @@ export default function DashboardPage() {
     clearRequestError,
   } = useAiSummary({ periode: aiPeriod })
 
+  const isProcessing = aiLoading || isRequesting
+
   const handleRequestSummary = () => requestSummary()
 
   if (isLoading) {
@@ -208,7 +210,7 @@ export default function DashboardPage() {
             id="ai-summary-period"
             label="Periode ringkasan"
             value={aiPeriod}
-            disabled={isRequesting}
+            disabled={isProcessing}
             onChange={(event) => {
               clearRequestError()
               setAiPeriod(Number(event.target.value))
@@ -219,11 +221,16 @@ export default function DashboardPage() {
             ]}
           />
           <Button
-            disabled={isRequesting}
+            loading={isProcessing}
+            disabled={isProcessing}
             onClick={handleRequestSummary}
             className="w-full sm:w-auto"
           >
-            {aiData ? 'Cek ringkasan' : 'Buat ringkasan'}
+            {isProcessing
+              ? 'Menganalisis…'
+              : aiData
+              ? 'Cek ringkasan'
+              : 'Buat ringkasan'}
           </Button>
         </div>
 
@@ -233,8 +240,23 @@ export default function DashboardPage() {
           memaksa AI membuat ulang.
         </p>
 
-        {aiLoading ? (
-          <Skeleton className="mt-4 h-20 w-full" />
+        {isProcessing ? (
+          <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border border-dashed border-primary/30 bg-[#edf6ef]/60 p-6 text-center">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Sparkles className="size-6 animate-pulse text-primary" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-navy">
+              Sedang menganalisis laporan dengan AI…
+            </p>
+            <p className="mt-1 text-xs text-body">
+              Mohon tunggu beberapa saat selagi AI menyusun ringkasan tren {aiPeriod} hari terakhir.
+            </p>
+            <div className="mt-4 w-full max-w-sm space-y-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-4/5 mx-auto" />
+              <Skeleton className="h-3 w-3/5 mx-auto" />
+            </div>
+          </div>
         ) : aiError ? (
           <div role="alert" className="mt-4 rounded-2xl border border-[#f1d5d5] bg-[#fff5f5] p-4 text-sm text-danger">
             Ringkasan AI gagal dimuat. Coba lagi.

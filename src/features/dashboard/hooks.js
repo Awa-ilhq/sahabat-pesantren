@@ -35,10 +35,14 @@ export const useAiSummary = ({ periode = 7 } = {}) => {
         staleTime: AI_SUMMARY_CACHE_MS,
         gcTime: AI_SUMMARY_CACHE_MS,
       }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKey, data)
+    },
   })
 
   return {
     ...query,
+    data: request.data || query.data,
     requestSummary: request.mutate,
     isRequesting: request.isPending,
     requestError: request.error,
